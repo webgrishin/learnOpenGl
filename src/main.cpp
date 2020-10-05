@@ -16,7 +16,7 @@ const unsigned int WINDOW_HEIGHT = 600;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-const char* vertexShaderSource = R"(
+const char* vShader = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
 void main()
@@ -24,12 +24,20 @@ void main()
 gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
 }
 )";
-const char* fragmentShaderSource = R"(
+const char* fShaderOrange = R"(
 #version 330 core
 out vec4 FragColor;
 void main()
 {
   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+}
+)";
+const char* fShaderYellow = R"(
+#version 330 core
+out vec4 FragColor;
+void main()
+{
+  FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
 }
 )";
 
@@ -80,46 +88,33 @@ int main(void)
 
     // Вершинный шейдер
     int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glShaderSource(vertexShader, 1, &vShader, NULL);
     glCompileShader(vertexShader);
 
-    // Проверка на наличие ошибок компилирования вершинного шейдера
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
+    // Фрагментный шейдер Orange
+    int fSOrange = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fSOrange, 1, &fShaderOrange, NULL);
+    glCompileShader(fSOrange);
 
-    // Фрагментный шейдер
-    int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // Проверка на наличие ошибок компилирования фрагментного шейдера
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
+    // Фрагментный шейдер Yellow
+    int fSYellow = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fSYellow, 1, &fShaderYellow, NULL);
+    glCompileShader(fSYellow);
 
     // Связывание шейдеров
-    int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    int shaderProgramFillOrange = glCreateProgram();
+    glAttachShader(shaderProgramFillOrange, vertexShader);
+    glAttachShader(shaderProgramFillOrange, fSOrange);
+    glLinkProgram(shaderProgramFillOrange);
 
-    // Проверка на наличие ошибок компилирования связывания шейдеров
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
+    int shaderProgramFillYellow = glCreateProgram();
+    glAttachShader(shaderProgramFillYellow, vertexShader);
+    glAttachShader(shaderProgramFillYellow, fSYellow);
+    glLinkProgram(shaderProgramFillYellow);
+
     glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    glDeleteShader(fSOrange);
+    glDeleteShader(fSYellow);
 
     // Указывание вершин (и буферов) и настройка вершинных атрибутов
     float vertices0[] = {
@@ -184,9 +179,10 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Рисуем наш первый треугольник
-        glUseProgram(shaderProgram);
+        glUseProgram(shaderProgramFillOrange);
         glBindVertexArray(VAOs[0]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        glUseProgram(shaderProgramFillYellow);
         glBindVertexArray(VAOs[1]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glDrawArrays(GL_TRIANGLES, 0, 3);
         // glBindVertexArray(0); // не нужно каждый раз его отвязывать

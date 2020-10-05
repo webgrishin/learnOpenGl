@@ -117,32 +117,38 @@ int main(void)
     glDeleteShader(fSYellow);
 
     // Указывание вершин (и буферов) и настройка вершинных атрибутов
-    float vertices0[] = {
+    float vTriangle0[] = {
             -1.0f, -1.0f, 0.0f, // левая вершина
             0.0f, -1.0f, 0.0f, // правая вершина
             -0.5f,  0.0f, 0.0f,  // верхняя вершина
-            //0.0f, -1.0f, 0.0f, // левая вершина
-            // 1.0f, -1.0f, 0.0f, // правая вершина
-            // 0.5f,  0.0f, 0.0f  // верхняя вершина
     };
-    float vertices1[] = {
-            //-1.0f, -1.0f, 0.0f, // левая вершина
-            //0.0f, -1.0f, 0.0f, // правая вершина
-            //-0.5f,  0.0f, 0.0f,  // верхняя вершина
+    float vTriangle1[] = {
             0.0f, -1.0f, 0.0f, // левая вершина
             1.0f, -1.0f, 0.0f, // правая вершина
             0.5f,  0.0f, 0.0f  // верхняя вершина
     };
 
-    unsigned int VBOs[2], VAOs[2];
-    glGenVertexArrays(2, VAOs);
-    glGenBuffers(2, VBOs);
+    float vRectangle[] = {
+            -0.5f, 0.5f, 0.0f, // left top
+            -0.5f, 0.0f, 0.0f, // left down
+            0.5f,  0.0f, 0.0f,  // right down
+            0.5f, 0.5f, 0.0f, // right up
+    };
+    unsigned int indices[] = {
+            0, 1, 2,   // первый треугольник
+            2, 3, 0    // второй треугольник
+    };
+
+    unsigned int VBOs[3], VAOs[3], EBO;
+    glGenVertexArrays(3, VAOs);
+    glGenBuffers(3, VBOs);
+    glGenBuffers(1, &EBO);
 
     //set first triangle
     glBindVertexArray(VAOs[0]);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices0), vertices0, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vTriangle0), vTriangle0, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -151,25 +157,33 @@ int main(void)
     glBindVertexArray(VAOs[1]);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices0), vertices1, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vTriangle1), vTriangle1, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    //set Rectangle
+    glBindVertexArray(VAOs[2]);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vRectangle), vRectangle, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+
     // Обратите внимание, что данное действие разрешено, вызов glVertexAttribPointer() зарегистрировал VBO как привязанный вершинный буферный объект для вершинного атрибута, так что после этого мы можем спокойно выполнить отвязку
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // помните: не отвязывайте EBO, пока VАО активен, поскольку связанного объект буфера элемента хранится в VАО; сохраняйте привязку EBO.
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Вы можете отменить привязку VАО после этого, чтобы другие вызовы VАО случайно не изменили этот VAO (но подобное довольно редко случается)
     // Модификация других VAO требует вызов glBindVertexArray(), поэтому мы обычно не снимаем привязку VAO (или VBO), когда это не требуется напрямую
     glBindVertexArray(0);
-
-
-    // Раскомментируйте строчку ниже для отрисовки полигонов в режиме каркаса
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-
-
-
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -178,10 +192,18 @@ int main(void)
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Рисуем наш первый треугольник
+        //draw rectangle
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glUseProgram(shaderProgramFillOrange);
+        glBindVertexArray(VAOs[2]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        //draw first triangle
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glBindVertexArray(VAOs[0]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        //draw second triangle
         glUseProgram(shaderProgramFillYellow);
         glBindVertexArray(VAOs[1]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -193,8 +215,12 @@ int main(void)
         glfwPollEvents();
     }
     // Опционально: освобождаем все ресурсы, как только они выполнили своё предназначение
-    glDeleteVertexArrays(2, VAOs);
-    glDeleteBuffers(2, VBOs);
+    glDeleteVertexArrays(3, VAOs);
+    glDeleteBuffers(3, VBOs);
+    glDeleteBuffers(1, &EBO);
+
+    glDeleteProgram(shaderProgramFillOrange);
+    glDeleteProgram(shaderProgramFillYellow);
 
     glfwTerminate();
     return 0;

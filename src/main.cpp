@@ -16,28 +16,41 @@ const unsigned int WINDOW_HEIGHT = 600;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-const char* vShader = R"(
+const char* vertexShader = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
 void main()
 {
-gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
 }
 )";
-const char* fShaderOrange = R"(
+const char* vertexShaderWithColor = R"(
+#version 330 core
+layout (location = 0) in vec3 vPos;
+layout (location = 1) in vec3 vColor;
+out vec3 color;
+void main()
+{
+    color = vColor;
+    gl_Position = vec4(vPos, 1.0);
+}
+)";
+
+const char* fragmentShader = R"(
+#version 330 core
+in vec3 color;
+out vec4 fragColor;
+void main()
+{
+    fragColor = vec4(color, 1.0f);
+}
+)";
+const char* fragmentShaderOrange = R"(
 #version 330 core
 out vec4 FragColor;
 void main()
 {
-  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-}
-)";
-const char* fShaderYellow = R"(
-#version 330 core
-out vec4 FragColor;
-void main()
-{
-  FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 }
 )";
 
@@ -87,34 +100,39 @@ int main(void)
 // Компилирование нашей шейдерной программы
 
     // Вершинный шейдер
-    int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vShader, NULL);
-    glCompileShader(vertexShader);
+    int vShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vShader, 1, &vertexShader, NULL);
+    glCompileShader(vShader);
+
+    // Вершинный шейдер с цветом
+    int vShaderWithColor = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vShaderWithColor, 1, &vertexShaderWithColor, NULL);
+    glCompileShader(vShaderWithColor);
+
+    // Фрагментный шейдер Orange
+    int fShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fShader, 1, &fragmentShader, NULL);
+    glCompileShader(fShader);
 
     // Фрагментный шейдер Orange
     int fSOrange = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fSOrange, 1, &fShaderOrange, NULL);
+    glShaderSource(fSOrange, 1, &fragmentShaderOrange, NULL);
     glCompileShader(fSOrange);
-
-    // Фрагментный шейдер Yellow
-    int fSYellow = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fSYellow, 1, &fShaderYellow, NULL);
-    glCompileShader(fSYellow);
 
     // Связывание шейдеров
     int shaderProgramFillOrange = glCreateProgram();
-    glAttachShader(shaderProgramFillOrange, vertexShader);
+    glAttachShader(shaderProgramFillOrange, vShader);
     glAttachShader(shaderProgramFillOrange, fSOrange);
     glLinkProgram(shaderProgramFillOrange);
 
-    int shaderProgramFillYellow = glCreateProgram();
-    glAttachShader(shaderProgramFillYellow, vertexShader);
-    glAttachShader(shaderProgramFillYellow, fSYellow);
-    glLinkProgram(shaderProgramFillYellow);
+    int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vShaderWithColor);
+    glAttachShader(shaderProgram, fShader);
+    glLinkProgram(shaderProgram);
 
-    glDeleteShader(vertexShader);
+    glDeleteShader(vShader);
+    glDeleteShader(vShaderWithColor);
     glDeleteShader(fSOrange);
-    glDeleteShader(fSYellow);
 
     // Указывание вершин (и буферов) и настройка вершинных атрибутов
     float vTriangle0[] = {
@@ -138,10 +156,15 @@ int main(void)
             0, 1, 2,   // первый треугольник
             2, 3, 0    // второй треугольник
     };
+    GLfloat colors[]={
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f
+    };
 
-    unsigned int VBOs[3], VAOs[3], EBO;
+    unsigned int VBOs[4], VAOs[3], EBO;
     glGenVertexArrays(3, VAOs);
-    glGenBuffers(3, VBOs);
+    glGenBuffers(4, VBOs);
     glGenBuffers(1, &EBO);
 
     //set first triangle
@@ -149,7 +172,6 @@ int main(void)
 
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vTriangle0), vTriangle0, GL_STATIC_DRAW);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -158,14 +180,18 @@ int main(void)
 
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vTriangle1), vTriangle1, GL_STATIC_DRAW);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
 
     //set Rectangle
     glBindVertexArray(VAOs[2]);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vRectangle), vRectangle, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -204,7 +230,7 @@ int main(void)
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         //draw second triangle
-        glUseProgram(shaderProgramFillYellow);
+        glUseProgram(shaderProgram);
         glBindVertexArray(VAOs[1]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glDrawArrays(GL_TRIANGLES, 0, 3);
         // glBindVertexArray(0); // не нужно каждый раз его отвязывать
@@ -216,11 +242,11 @@ int main(void)
     }
     // Опционально: освобождаем все ресурсы, как только они выполнили своё предназначение
     glDeleteVertexArrays(3, VAOs);
-    glDeleteBuffers(3, VBOs);
+    glDeleteBuffers(4, VBOs);
     glDeleteBuffers(1, &EBO);
 
     glDeleteProgram(shaderProgramFillOrange);
-    glDeleteProgram(shaderProgramFillYellow);
+    glDeleteProgram(shaderProgram);
 
     glfwTerminate();
     return 0;

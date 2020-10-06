@@ -188,7 +188,6 @@ int main(void)
         //draw first triangle
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         ourShader.use();
-        ourShader.setFloat("xOffset", 0.5f);
 //        glBindVertexArray(VAOs[0]); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glBindVertexArray(VAO); // поскольку у нас есть только один VАО, то нет необходимости связывать его каждый раз (но мы сделаем это, чтобы всё было немного организованнее)
         glDrawArrays(GL_TRIANGLES, 0, 3);

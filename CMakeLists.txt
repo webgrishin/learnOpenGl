@@ -1,11 +1,17 @@
 ﻿cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
 
 set(PROJECT_NAME learnOpenGl)
-set(CMAKE_CXX_STANDARD 20)
+#set(CMAKE_CXX_STANDARD 20)
 
 project(${PROJECT_NAME})
 
-add_executable(${PROJECT_NAME} src/main.cpp src/Shader.cpp src/Shader.h)
+add_executable(${PROJECT_NAME}
+        src/main.cpp
+        src/Renderer/ShaderProgram.cpp
+        src/Renderer/ShaderProgram.h
+)
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)

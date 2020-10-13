@@ -14,7 +14,8 @@ const unsigned int WINDOW_WIDTH = 800;
 const unsigned int WINDOW_HEIGHT = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void processInput(GLFWwindow *window, RenderEngine::ShaderProgram &ourShader, float &ratio);
+void changeRatioVisibleImage(RenderEngine::ShaderProgram &ourShader, float &ratio, float step);
 
 int main(void)
 {
@@ -42,7 +43,6 @@ int main(void)
     }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetKeyCallback(window, key_callback);
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
@@ -66,11 +66,10 @@ int main(void)
         return -1;
 
     float vertices[] = {
-            // координаты          // цвета           // текстурные координаты
-            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   2.0f, 2.0f, // верхняя правая вершина
-            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   2.0f, 0.0f, // нижняя правая вершина
+            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // верхняя правая вершина
+            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // нижняя правая вершина
             -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // нижняя левая вершина
-            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 2.0f  // верхняя левая вершина
+            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // верхняя левая вершина
     };
     unsigned int indices[] = {
             0, 1, 3, // первый треугольник
@@ -111,13 +110,11 @@ int main(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// установка метода наложения текстуры GL_REPEAT (стандартный метод наложения)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // установка параметров фильтрации текстуры
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // загрузка изображения, создание текстуры и генерирование mipmap-уровней
     int width, height, nrChannels;
     unsigned char* data = stbi_load("C:\\learnOpenGl-CLion\\src\\assets\\textures\\awesomeface.png", &width, &height, &nrChannels, 0);
-//    unsigned char* data = stbi_load("C:\\learnOpenGl-CLion\\src\\assets\\textures\\flowers_texture734.jpg", &width, &height, &nrChannels, 0);
-//    unsigned char* data = stbi_load("C:\\learnOpenGl-CLion\\src\\assets\\textures\\wooden_container.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -130,8 +127,8 @@ int main(void)
     glBindTexture(GL_TEXTURE_2D, textures[1]); // все последующие GL_TEXTURE_2D-операции теперь будут влиять на данный текстурный объект
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// установка метода наложения текстуры GL_REPEAT (стандартный метод наложения)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     data = stbi_load("C:\\learnOpenGl-CLion\\src\\assets\\textures\\wooden_container.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
@@ -147,10 +144,14 @@ int main(void)
     ourShader.use();
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
+    float ratio = 0.5f;
+    ourShader.setFloat("ratio", ratio);
+
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        processInput(window, ourShader, ratio);
         /* Render here */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -180,13 +181,24 @@ int main(void)
     return 0;
 }
 
+void changeRatioVisibleImage(RenderEngine::ShaderProgram &ourShader, float &ratio, float step=0.0f){
+    if (ratio > 0.0f && step < 0.0f || ratio < 1.0f && step > 0.0f) {
+        ratio += step;
+//        std::cout << ratio << std::endl;
+        ourShader.setFloat("ratio", ratio);
+    }
+}
 /*change size viewport(drawing, content) area of the window */
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
 }
-/*callback handler keyboard event - close window on key press escape*/
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+// Обработка всех событий ввода: запрос GLFW о нажатии/отпускании кнопки мыши в данном кадре и соответствующая обработка данных событий
+void processInput(GLFWwindow *window, RenderEngine::ShaderProgram &ourShader, float &ratio)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        changeRatioVisibleImage(ourShader, ratio, 0.001f);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        changeRatioVisibleImage(ourShader, ratio, -0.001f);
 }

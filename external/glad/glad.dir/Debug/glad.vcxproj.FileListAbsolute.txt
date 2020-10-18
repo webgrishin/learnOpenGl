@@ -1,0 +1,2 @@
+C:\learnOpenGl\external\glad\build\Debug\glad.pdb
+C:\learnOpenGl\external\glad\glad.dir\Debug\glad.pdb

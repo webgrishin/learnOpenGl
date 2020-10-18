@@ -4,6 +4,7 @@ set(PROJECT_NAME learnOpenGl)
 set(CMAKE_CXX_STANDARD 20)
 
 project(${PROJECT_NAME})
+
 add_executable(${PROJECT_NAME} src/main.cpp)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)

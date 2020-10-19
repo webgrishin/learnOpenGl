@@ -11,6 +11,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
+
 namespace RenderEngine {
     class ShaderProgram {
     public:
@@ -25,6 +27,8 @@ namespace RenderEngine {
         bool isCompiled() const { return m_isCompiled; }
 
         void use() const;
+        
+        void setMat4(const std::string& name, glm::mat4 value) const;
 
         void setBool(const std::string &name, bool value) const;
 

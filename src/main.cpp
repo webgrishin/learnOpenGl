@@ -200,11 +200,11 @@ int main(void)
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(VAO[1]);
-        float scale = tan(timeValue); 
-        std::cout << scale << std::endl;
+        float scale = sin(timeValue); 
+        //std::cout << scale << std::endl;
         trans = glm::translate(identityMatrix, glm::vec3(-0.5f, 0.5f, 0.0f));
         trans = glm::scale(trans, glm::vec3(scale, scale, 0));
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &trans[0][0]);
         ourShader.use();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

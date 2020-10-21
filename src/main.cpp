@@ -193,9 +193,18 @@ int main(void)
 		glBindTexture(GL_TEXTURE_2D, texture);
 
 		ourShader.use();
-		glm::mat4 view = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
-		glm::mat4 projection;
+		//glm::mat4 view = glm::mat4(1.0f);
+		//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+		const float radius = 40.0f;
+
+		GLdouble time = glfwGetTime();
+		std::cout << time << std::endl;
+		float camX = sin(time) * radius;
+		float camZ = cos(time) * radius;
+		glm::mat4 view;
+		view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+		
+glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
 		unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "view");
@@ -212,7 +221,7 @@ int main(void)
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * i;
 			if (i % 3 == 0)  // каждую третью итерацию (включая первую) мы устанавливаем угол, используя функцию времени из библиотеки GLFW
-				angle = glfwGetTime() * 5.0f * (i+1);
+				angle = glfwGetTime() * 5.0f * (i+1.0);
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			ourShader.setMat4("model", model);
 

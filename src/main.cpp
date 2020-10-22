@@ -3,6 +3,7 @@
 //#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+//#include <glm/geometric.hpp>
 //#include <glm/vec3.hpp> // glm::vec3
 //#include <glm/vec4.hpp> // glm::vec4
 //#include <glm/mat4x4.hpp> // glm::mat4
@@ -21,11 +22,19 @@
  //#define __APPLE__
 const unsigned int WINDOW_WIDTH = 800;
 const unsigned int WINDOW_HEIGHT = 600;
+struct Camera
+{
+	GLfloat Speed;
+	glm::vec3 Pos;
+	glm::vec3 Front;
+	glm::vec3 Up;
+};
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void changeRatioVisibleImage(RenderEngine::ShaderProgram& ourShader, float& ratio, float step);
 void processInput(GLFWwindow* window, RenderEngine::ShaderProgram& ourShader, float& ratio);
 void processInput(GLFWwindow* window);
-void changeRatioVisibleImage(RenderEngine::ShaderProgram& ourShader, float& ratio, float step);
+void processInput(GLFWwindow* window, Camera& camera);
 
 int main(void)
 {
@@ -184,34 +193,40 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
+	Camera camera;
+	camera.Speed = 0.001f;
+	camera.Pos = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.Front = glm::vec3(0.0f, 0.0f, -1.0f);
+	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	ourShader.use();
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+	ourShader.setMat4("projection", projection);
+	
 	while (!glfwWindowShouldClose(window))
 	{
-		processInput(window);
+		processInput(window, camera);
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 
-		ourShader.use();
-		//glm::mat4 view = glm::mat4(1.0f);
-		//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
-		const float radius = 40.0f;
 
+		glm::mat4 view;
+		//view = glm::mat4(1.0f);
+		//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+
+		const float radius = 40.0f;
 		GLdouble time = glfwGetTime();
-		std::cout << time << std::endl;
 		float camX = sin(time) * radius;
 		float camZ = cos(time) * radius;
-		glm::mat4 view;
-		view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-		
-glm::mat4 projection;
-		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+		//view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+		//camera.Pos += glm::vec3(camX, 0.0, camZ);
+		view = glm::lookAt(camera.Pos, camera.Pos + camera.Front, camera.Up);
 
-		unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "view");
+		GLuint modelLoc = glGetUniformLocation(ourShader.ID, "view");
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-		modelLoc = glGetUniformLocation(ourShader.ID, "projection");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glBindVertexArray(VAO);
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -221,12 +236,14 @@ glm::mat4 projection;
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * i;
 			if (i % 3 == 0)  // каждую третью итерацию (включая первую) мы устанавливаем угол, используя функцию времени из библиотеки GLFW
-				angle = glfwGetTime() * 5.0f * (i+1.0);
+				angle = glfwGetTime() * 5.0f * (i + 1.0);
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			ourShader.setMat4("model", model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
+		
 		}
+		ourShader.use();
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -270,4 +287,18 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+}
+
+void processInput(GLFWwindow* window, Camera& camera)
+{
+	processInput(window);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.Pos += camera.Speed * camera.Front;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.Pos -= camera.Speed * camera.Front;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.Pos -= glm::normalize(glm::cross(camera.Front, camera.Up)) * camera.Speed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.Pos += glm::normalize(glm::cross(camera.Front, camera.Up)) * camera.Speed;
 }

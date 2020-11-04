@@ -21,11 +21,14 @@
  * used glfw docs https://www.glfw.org/docs/latest/window_guide.html
  * */
  //#define __APPLE__
-GLuint WINDOW_WIDTH = 800;
-GLuint WINDOW_HEIGHT = 600;
+
+const GLuint WINDOW_WIDTH = 800;
+const GLuint WINDOW_HEIGHT = 600;
 
 GLfloat lastX = WINDOW_WIDTH / 2.0f;
 GLfloat lastY = WINDOW_HEIGHT / 2.0f;
+
+const glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 bool firstMouse = true;
 
@@ -35,32 +38,11 @@ GLfloat lastFrame = 0.0f;
 
 RenderEngine::Camera camera;
 
-/* struct Camera
-{
-	GLfloat deltaTime = 0.0f;
-	GLfloat speed = 2.5f;
-	glm::vec3 pos;
-	glm::vec3 front;
-	glm::vec3 up;
-	GLboolean firstMouse = true;
-	GLfloat fov = 45.0f;
-	GLfloat yaw;
-	GLfloat pitch;
-	GLfloat xpos;
-	GLfloat ypos;
-	GLfloat lastX;
-	GLfloat lastY;
-	GLfloat sensitivity = 0.05f;
-}; */
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// void changeRatioVisibleImage(RenderEngine::ShaderProgram& ourShader, float& ratio, float step);
-// void processInput(GLFWwindow* window, RenderEngine::ShaderProgram& ourShader, float& ratio);
-// void processInput(GLFWwindow* window, Camera& camera);
 
 int main(void)
 {
@@ -111,6 +93,10 @@ int main(void)
 
 	RenderEngine::ShaderProgram ourShader("C:\\learnOpenGl-VS\\src\\assets\\shaders\\shader.vs", "C:\\learnOpenGl-VS\\src\\assets\\shaders\\shader.fs");
 	if (!ourShader.isCompiled())
+		return -1;
+		
+	RenderEngine::ShaderProgram lampShader("C:\\learnOpenGl-VS\\src\\assets\\shaders\\lamp.vs", "C:\\learnOpenGl-VS\\src\\assets\\shaders\\lamp.fs");
+	if (!lampShader.isCompiled())
 		return -1;
 
 	float vertices[] = {
@@ -175,7 +161,7 @@ int main(void)
 	//	1, 2, 3  // второй треугольник
 	//};
 	
-	GLuint VBO, VAO, EBO;
+	GLuint VBO, VAO/*, EBO*/;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	//glGenBuffers(1, &EBO);
@@ -191,6 +177,18 @@ int main(void)
 	// координатные атрибуты
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	//2. настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
+    unsigned int lampVAO;
+    glGenVertexArrays(1, &lampVAO);
+    glBindVertexArray(lampVAO);
+
+    //нам нужно только привязаться к VBO (чтобы связать его с glVertexAttribPointer), не нужно заполнять его; данные VBO уже содержат все, что нам нужно(они уже привязаны, но мы делаем это снова в образовательных целях) 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+	/*
 	// атрибуты текстурных координат
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
@@ -220,7 +218,7 @@ int main(void)
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
-
+	*/
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -239,10 +237,12 @@ int main(void)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glBindTexture(GL_TEXTURE_2D, texture);
+		//glBindTexture(GL_TEXTURE_2D, texture);
 
 		//Активируем шейдер
 		ourShader.use();
+		ourShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+		ourShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 		// передаем шейдеру матрицу проекции(поскольку проекционная матрица редко меняется, нет необходимости делать это для каждого кадра)
 		// -----------------------------------------------------------------------------------------------------------
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
@@ -252,24 +252,35 @@ int main(void)
 		glm::mat4 view = camera.GetViewMatrix();
 		ourShader.setMat4("view", view);
 
-
 		// рендерим ящик
 		glBindVertexArray(VAO);
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glm::mat4 model;
 		for (unsigned int i = 0; i < 10; i++)
 		{
 			// вычисляем матрицу модели для каждого объекта и передаём ее в шейдер до отрисовки
-			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::mat4(1.0f);
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * i;
-			if (i % 3 == 0)  // каждую третью итерацию (включая первую) мы устанавливаем угол, используя функцию времени из библиотеки GLFW
+			if (i % 3 == 0) // каждую третью итерацию (включая первую) мы устанавливаем угол, используя функцию времени из библиотеки GLFW
 				angle = glfwGetTime() * 5.0f * (i + 1.0);
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 1.0f, 1.0f));
 			ourShader.setMat4("model", model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
-		
 		}
+
+		// также отрисовываем наш объект-"лампочку"
+		lampShader.use();
+        lampShader.setMat4("projection", projection);
+        lampShader.setMat4("view", view);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f)); // куб, меньшего размера
+        lampShader.setMat4("model", model);
+
+        glBindVertexArray(lampVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -279,8 +290,8 @@ int main(void)
 	// Опционально: освобождаем все ресурсы, как только они выполнили своё предназначение
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteTextures(1, &texture);
+	//glDeleteBuffers(1, &EBO);
+	//glDeleteTextures(1, &texture);
 
 	glfwTerminate();
 	return 0;
@@ -288,7 +299,7 @@ int main(void)
 
 // Обработка всех событий ввода: запрос GLFW о нажатии/отпускании кнопки мыши в данном кадре и соответствующая обработка данных событий
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -305,7 +316,7 @@ void processInput(GLFWwindow* window)
 
 // glfw: всякий раз, когда изменяются размеры окна (пользователем или опер. системой), вызывается данная функция
 // ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	// убеждаемся, что вьюпорт соответствует новым размерам окна; обратите внимание,
 	// что ширина и высота будут значительно больше, чем указано на retina -дисплеях.
@@ -314,7 +325,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // glfw: всякий раз, когда перемещается мышь, вызывается данная callback-функция
 // -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
 	if (firstMouse)
 	{
@@ -334,8 +345,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 // glfw: всякий раз, когда прокручивается колесико мыши, вызывается данная callback-функция
 // ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(yoffset);
 }
-

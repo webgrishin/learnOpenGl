@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include "Renderer/ShaderProgram.h"
+#include "Renderer/Camera.h"
 #include "stb_image.h"
 
 /*
@@ -20,21 +21,46 @@
  * used glfw docs https://www.glfw.org/docs/latest/window_guide.html
  * */
  //#define __APPLE__
-const unsigned int WINDOW_WIDTH = 800;
-const unsigned int WINDOW_HEIGHT = 600;
-struct Camera
+GLuint WINDOW_WIDTH = 800;
+GLuint WINDOW_HEIGHT = 600;
+
+GLfloat lastX = WINDOW_WIDTH / 2.0f;
+GLfloat lastY = WINDOW_HEIGHT / 2.0f;
+
+bool firstMouse = true;
+
+// тайминги
+GLfloat deltaTime = 0.0f;	// время между текущим кадром и последним кадром
+GLfloat lastFrame = 0.0f;
+
+RenderEngine::Camera camera;
+
+/* struct Camera
 {
-	GLdouble deltaTime = 0.0f;
-	glm::vec3 Pos;
-	glm::vec3 Front;
-	glm::vec3 Up;
-};
+	GLfloat deltaTime = 0.0f;
+	GLfloat speed = 2.5f;
+	glm::vec3 pos;
+	glm::vec3 front;
+	glm::vec3 up;
+	GLboolean firstMouse = true;
+	GLfloat fov = 45.0f;
+	GLfloat yaw;
+	GLfloat pitch;
+	GLfloat xpos;
+	GLfloat ypos;
+	GLfloat lastX;
+	GLfloat lastY;
+	GLfloat sensitivity = 0.05f;
+}; */
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void changeRatioVisibleImage(RenderEngine::ShaderProgram& ourShader, float& ratio, float step);
-void processInput(GLFWwindow* window, RenderEngine::ShaderProgram& ourShader, float& ratio);
 void processInput(GLFWwindow* window);
-void processInput(GLFWwindow* window, Camera& camera);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+// void changeRatioVisibleImage(RenderEngine::ShaderProgram& ourShader, float& ratio, float step);
+// void processInput(GLFWwindow* window, RenderEngine::ShaderProgram& ourShader, float& ratio);
+// void processInput(GLFWwindow* window, Camera& camera);
 
 int main(void)
 {
@@ -61,9 +87,11 @@ int main(void)
 		return -1;
 	}
 
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (!gladLoadGL()) {
 		std::cerr << "gladLoadGL failed!" << std::endl;
@@ -73,6 +101,7 @@ int main(void)
 	std::cout << "VideoCard: " << glGetString(GL_RENDERER) << std::endl;
 	std::cout << "OpenGl version: " << glGetString(GL_VERSION) << std::endl;
 	//    std::cout << "OpenGl: " << GLVersion.major << "." << GLVersion.minor << std::endl;
+
 
 
 	/*OPENGL*/
@@ -127,57 +156,7 @@ int main(void)
 	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
-
-	unsigned int indices[] = {
-		0, 1, 3, // первый треугольник
-		1, 2, 3  // второй треугольник
-	};
-	unsigned int VBO, VAO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// координатные атрибуты
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// атрибуты текстурных координат
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-
-	// загрузка и создание текстуры
-	// -------------------------
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture); // все последующие GL_TEXTURE_2D-операции теперь будут влиять на данный текстурный объект
-	// установка параметров наложения текстуры
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// установка метода наложения текстуры GL_REPEAT (стандартный метод наложения)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// установка параметров фильтрации текстуры
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// загрузка изображения, создание текстуры и генерирование mipmap-уровней
-	int width, height, nrChannels;
-	unsigned char* data = stbi_load("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container.jpg", &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data);
-
+	
 	glm::vec3 cubePositions[] = {
 	  glm::vec3(0.0f,  0.0f,  0.0f),
 	  glm::vec3(2.0f,  5.0f, -15.0f),
@@ -191,60 +170,106 @@ int main(void)
 	  glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
+	//unsigned int indices[] = {
+	//	0, 1, 3, // первый треугольник
+	//	1, 2, 3  // второй треугольник
+	//};
+	
+	GLuint VBO, VAO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	//glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// координатные атрибуты
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// атрибуты текстурных координат
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+
+	// загрузка и создание текстуры
+	// -------------------------
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture); // все последующие GL_TEXTURE_2D-операции теперь будут влиять на данный текстурный объект
+	// установка параметров наложения текстуры
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// установка метода наложения текстуры GL_REPEAT (стандартный метод наложения)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// установка параметров фильтрации текстуры
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// загрузка изображения, создание текстуры и генерирование mipmap-уровней
+	GLint width, height, nrChannels;
+	unsigned char* data = stbi_load("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container.jpg", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+
+
 	glEnable(GL_DEPTH_TEST);
 
-	Camera camera;
-	camera.Pos = glm::vec3(0.0f, 0.0f, 3.0f);
-	camera.Front = glm::vec3(0.0f, 0.0f, -1.0f);
-	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	ourShader.use();
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-	ourShader.setMat4("projection", projection);
-	GLfloat lastTime = 0.0f;
 	while (!glfwWindowShouldClose(window))
 	{
-		GLfloat time = glfwGetTime();
-		camera.deltaTime = time - lastTime;
-		lastTime = time;
-		processInput(window, camera);
+		// логическая часть работы со временем для каждого кадра
+		// --------------------
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		processInput(window);
+
+		// рендеринг
+		// ------
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 
+		//Активируем шейдер
+		ourShader.use();
+		// передаем шейдеру матрицу проекции(поскольку проекционная матрица редко меняется, нет необходимости делать это для каждого кадра)
+		// -----------------------------------------------------------------------------------------------------------
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+		ourShader.setMat4("projection", projection);
 
-		glm::mat4 view;
-		//view = glm::mat4(1.0f);
-		//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
-
-		//const float radius = 40.0f;
-		//float camX = sin(time) * radius;
-		//float camZ = cos(time) * radius;
-		//view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-		//camera.Pos += glm::vec3(camX, 0.0, camZ);
-		view = glm::lookAt(camera.Pos, camera.Pos + camera.Front, camera.Up);
-
-		GLuint modelLoc = glGetUniformLocation(ourShader.ID, "view");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(view));
+		// создаем преобразование камеры/вида
+		glm::mat4 view = camera.GetViewMatrix();
+		ourShader.setMat4("view", view);
 
 
+		// рендерим ящик
 		glBindVertexArray(VAO);
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		for (unsigned int i = 0; i < 10; i++)
 		{
+			// вычисляем матрицу модели для каждого объекта и передаём ее в шейдер до отрисовки
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * i;
 			if (i % 3 == 0)  // каждую третью итерацию (включая первую) мы устанавливаем угол, используя функцию времени из библиотеки GLFW
 				angle = glfwGetTime() * 5.0f * (i + 1.0);
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 1.0f, 1.0f));
 			ourShader.setMat4("model", model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		}
-		ourShader.use();
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -261,46 +286,56 @@ int main(void)
 	return 0;
 }
 
-void changeRatioVisibleImage(RenderEngine::ShaderProgram& ourShader, float& ratio, float step = 0.0f) {
-	if (ratio > 0.0f && step < 0.0f || ratio < 1.0f && step > 0.0f) {
-		ratio += step;
-		//        std::cout << ratio << std::endl;
-		ourShader.setFloat("ratio", ratio);
-	}
-}
-/*change size viewport(drawing, content) area of the window */
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
-}
 // Обработка всех событий ввода: запрос GLFW о нажатии/отпускании кнопки мыши в данном кадре и соответствующая обработка данных событий
-void processInput(GLFWwindow* window, RenderEngine::ShaderProgram& ourShader, float& ratio)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		changeRatioVisibleImage(ourShader, ratio, 0.001f);
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		changeRatioVisibleImage(ourShader, ratio, -0.001f);
-}
-
+// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-}
 
-void processInput(GLFWwindow* window, Camera& camera)
-{
-	processInput(window);
-
-	GLfloat Speed = 2.5f * camera.deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.Pos += Speed * camera.Front;
+		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.Pos -= Speed * camera.Front;
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.Pos -= glm::normalize(glm::cross(camera.Front, camera.Up)) * Speed;
+		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.Pos += glm::normalize(glm::cross(camera.Front, camera.Up)) * Speed;
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
+
+// glfw: всякий раз, когда изменяются размеры окна (пользователем или опер. системой), вызывается данная функция
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// убеждаемся, что вьюпорт соответствует новым размерам окна; обратите внимание,
+	// что ширина и высота будут значительно больше, чем указано на retina -дисплеях.
+	glViewport(0, 0, width, height);
+}
+
+// glfw: всякий раз, когда перемещается мышь, вызывается данная callback-функция
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // перевернуто, так как Y-координаты идут снизу вверх
+
+	lastX = xpos;
+	lastY = ypos;
+
+	camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+// glfw: всякий раз, когда прокручивается колесико мыши, вызывается данная callback-функция
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.ProcessMouseScroll(yoffset);
+}
+

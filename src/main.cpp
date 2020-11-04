@@ -255,9 +255,7 @@ int main(void)
 
 		//Активируем шейдер
 		ourShader.use();
-		//ourShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-		//ourShader.setVec3("lampColor", glm::vec3(1.0f, 1.0f, 1.0f));
-		//ourShader.setVec3("lampPos", lampPos);
+		ourShader.setVec3("viewPos", camera.Position);
 
 		// передаем шейдеру матрицу проекции(поскольку проекционная матрица редко меняется, нет необходимости делать это для каждого кадра)
 		// -----------------------------------------------------------------------------------------------------------
@@ -291,10 +289,6 @@ int main(void)
 		lampShader.use();
 		lampShader.setMat4("projection", projection);
 		lampShader.setMat4("view", view);
-		//model = glm::mat4(1.0f);
-		//model = glm::translate(model, lampPos);
-		//model = glm::scale(model, glm::vec3(0.2f)); // куб, меньшего размера
-		//lampShader.setMat4("model", model);
 
 		glBindVertexArray(lampVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

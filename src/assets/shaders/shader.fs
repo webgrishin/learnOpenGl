@@ -7,6 +7,7 @@ in vec3 FragPos;
 uniform vec3 objectColor;
 uniform vec3 lampColor;
 uniform vec3 lampPos;
+uniform vec3 viewPos;
 
 void main()
 {
@@ -19,11 +20,20 @@ void main()
 	//получаем силу освещени€ к точке на поверхности
 	vec3 diffuse = diff * lampColor;
 
-	//‘оновое освещение
+	//»нтенсивность ‘онового освещени€
 	float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lampColor;
+
+	//»нтенсивность отражени€
+	float specularStrength = 0.5;
+	//Ќаправление взгл€да
+	vec3 viewDir = normalize(viewPos - FragPos);
+	//вектор отражени€ вдоль нормальной оси
+	vec3 reflectDir = reflect(-lampDir, norm);
+	//”гол зеркального отражени€(отраженна€ составл€юща€), 32 степень - это значение блеска свечени€
+	float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32);
  
-    FragColor = vec4(objectColor * (ambient + diffuse), 1.0);
+    FragColor = vec4(objectColor * (ambient + diffuse + specular), 1.0);
 	//FragColor = vec4(lampColor * objectColor, 1.0);
 
 	//FragColor = texture(texture1, TexCoord);

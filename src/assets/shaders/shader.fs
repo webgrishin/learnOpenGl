@@ -8,5 +8,9 @@ uniform vec3 lightColor;
 void main()
 {
 	//FragColor = texture(texture1, TexCoord);
-	FragColor = vec4(lightColor * objectColor, 1.0);
+	float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+ 
+    FragColor = vec4(ambient * objectColor, 1.0);
+	//FragColor = vec4(lightColor * objectColor, 1.0);
 }

@@ -93,24 +93,21 @@ namespace RenderEngine {
 
     glm::mat4 Camera::myLookAt()
     {
-        glm::vec3 target = Position + Front;
-        glm::vec3 front = glm::normalize(Position - target);
-        glm::vec3 right = glm::normalize(glm::cross(WorldUp, front));
-        glm::vec3 up = glm::cross(front, right);
-        //glm::vec3 front = Front * -1.0f;
-		//glm::vec3 right = Right * -1.0f;
-        //glm::vec3 up = Up * -1.0f;
+        //glm::vec3 target = Position + Front;
+        //glm::vec3 front = glm::normalize(Position - target);
+        //glm::vec3 right = glm::normalize(glm::cross(WorldUp, front));
+        //glm::vec3 up = glm::cross(front, right);
 
         glm::mat4 lookAt(1.0f);
-        lookAt[0][0] = right.x;
-        lookAt[1][0] = right.y;
-        lookAt[2][0] = right.z;
-        lookAt[0][1] = up.x;
-        lookAt[1][1] = up.y;
-        lookAt[2][1] = up.z;
-        lookAt[0][2] = front.x;
-        lookAt[1][2] = front.y;
-        lookAt[2][2] = front.z;
+        lookAt[0][0] = Right.x;
+        lookAt[1][0] = Right.y;
+        lookAt[2][0] = Right.z;
+        lookAt[0][1] = Up.x;
+        lookAt[1][1] = Up.y;
+        lookAt[2][1] = Up.z;
+        lookAt[0][2] = -Front.x;
+        lookAt[1][2] = -Front.y;
+        lookAt[2][2] = -Front.z;
 
         glm::mat4 position(1.0f);
         position[3][0] = -Position.x;

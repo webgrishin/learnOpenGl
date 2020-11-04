@@ -23,8 +23,8 @@ namespace RenderEngine {
     // Возвращает матрицу вида, вычисленную с использованием углов Эйлера и LookAt-матрицы 
     glm::mat4 Camera::GetViewMatrix()
     {
-        //return myLookAt();
-        return glm::lookAt(Position, Position + Front, Up);
+        return myLookAt();
+        //return glm::lookAt(Position, Position + Front, Up);
     }
 
     //Обрабатываем входные данные, полученные от любой клавиатуроподобной системы ввода. Принимаем входной параметр в виде определенного камерой перечисления (для абстрагирования его от оконных систем)
@@ -41,7 +41,7 @@ namespace RenderEngine {
         if (direction == RIGHT)
             Position += Right * velocity;
 
-        Position.y = 0.0f; //Оставться на земле, в плоскости xz
+        //Position.y = 0.0f; //Оставться на земле, в плоскости xz
     }
 
     //Обрабатываем входные данные, полученные от системы ввода с помощью мыши. Ожидаем в качестве параметров значения смещения как в направлении X, так и в направлении Y.

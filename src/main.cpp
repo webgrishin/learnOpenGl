@@ -28,7 +28,7 @@ const GLuint WINDOW_HEIGHT = 600;
 GLfloat lastX = WINDOW_WIDTH / 2.0f;
 GLfloat lastY = WINDOW_HEIGHT / 2.0f;
 
-const glm::vec3 lampPos(1.2f, 1.0f, 2.0f);
+glm::vec3 lampPos(1.2f, 1.0f, 2.0f);
 
 bool firstMouse = true;
 
@@ -166,7 +166,6 @@ int main(void)
 	glGenBuffers(1, &VBO);
 	//glGenBuffers(1, &EBO);
 
-	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -174,15 +173,16 @@ int main(void)
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	glBindVertexArray(VAO);
 	//координатные атрибуты
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	//атрибут вектора нормали
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	//2. настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
-	unsigned int lampVAO;
+	GLuint lampVAO;
 	glGenVertexArrays(1, &lampVAO);
 	glBindVertexArray(lampVAO);
 

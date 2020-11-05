@@ -31,7 +31,7 @@ void main()
 	//вектор отражения вдоль нормальной оси
 	vec3 reflectDir = reflect(-lampDir, norm);
 	//Угол зеркального отражения(отраженная составляющая), 32 степень - это значение блеска свечения
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
 	vec3 specular = specularStrength * spec * lampColor;  
  
     FragColor = vec4(objectColor * (ambient + diffuse + specular), 1.0);

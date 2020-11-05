@@ -228,14 +228,9 @@ int main(void)
 	ourShader.use();
 	ourShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
 	ourShader.setVec3("lampColor", glm::vec3(1.0f, 1.0f, 1.0f));
-	ourShader.setVec3("lampPos", lampPos);
 
-	lampShader.use();
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, lampPos);
-	model = glm::scale(model, glm::vec3(0.2f)); // куб, меньшего размера
-	lampShader.setMat4("model", model);
-
+	GLfloat lengthLampPos = glm::length(lampPos);
+	GLfloat lampPosY = lampPos.y;
 	while (!glfwWindowShouldClose(window))
 	{
 		// логическая часть работы со временем для каждого кадра
@@ -256,6 +251,7 @@ int main(void)
 		//Активируем шейдер
 		ourShader.use();
 		ourShader.setVec3("viewPos", camera.Position);
+		ourShader.setVec3("lampPos", lampPos);
 
 		// передаем шейдеру матрицу проекции(поскольку проекционная матрица редко меняется, нет необходимости делать это для каждого кадра)
 		// -----------------------------------------------------------------------------------------------------------
@@ -287,6 +283,17 @@ int main(void)
 		}
 		// также отрисовываем наш объект-"лампочку"
 		lampShader.use();
+		model = glm::mat4(1.0f);
+		lampPos.x = sin(lastFrame * 0.5) * lengthLampPos;
+		lampPos.z = cos(lastFrame * 0.5) * lengthLampPos;
+		lampPos.y = lampPosY + (sin(lastFrame * 3) * 0.7);
+		
+		//lampPos.x = 1.0f + sin(glfwGetTime()) * 2.0f;
+		//lampPos.y = sin(glfwGetTime() / 2.0f) * 1.0f;
+
+		model = glm::translate(model, lampPos);
+		model = glm::scale(model, glm::vec3(0.2f)); // куб, меньшего размера
+		lampShader.setMat4("model", model);
 		lampShader.setMat4("projection", projection);
 		lampShader.setMat4("view", view);
 

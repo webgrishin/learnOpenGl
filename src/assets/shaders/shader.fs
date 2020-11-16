@@ -1,9 +1,10 @@
 #version 460 core
 out vec4 FragColor;
 struct Material {
+	//цвет фона и рассе€нного света
 	sampler2D diffuse;
 	//цвет зеркального блика
-    vec3 specular;
+    sampler2D specular;
 	//рассеивание/радиус зеркального блика
     float shininess;
 }; 
@@ -47,7 +48,7 @@ void main()
 	vec3 reflectDir = reflect(-lightDir, norm);
 	//”гол зеркального отражени€(отраженна€ составл€юща€), 32 степень - это значение блеска свечени€
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-	vec3 specular = light.specular * (spec * material.specular); 
+	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb; 
  
     FragColor = vec4(ambient + diffuse + specular, 1.0);
 

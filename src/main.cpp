@@ -175,10 +175,12 @@ int main(void)
 
 	//загрузка текстур
 	// -----------------------------------------------------------------------------
-	unsigned int diffuseMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container_2.png");
+	GLuint diffuseMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container_2.png");
+	GLuint specularMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\container_2_specular.png");
 
 	ourShader.use();
 	ourShader.setInt("material.diffuse", 0);
+	ourShader.setInt("material.specular", 1);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -226,6 +228,9 @@ int main(void)
 		// связывание диффузной карты
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
+		// связывание карты отраженного света
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, specularMap);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

@@ -177,10 +177,12 @@ int main(void)
 	// -----------------------------------------------------------------------------
 	GLuint diffuseMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container_2.png");
 	GLuint specularMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\container_2_specular.png");
+	GLuint matrixMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\matrix.jpg");
 
 	ourShader.use();
 	ourShader.setInt("material.diffuse", 0);
 	ourShader.setInt("material.specular", 1);
+	ourShader.setInt("material.emission", 2);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -210,7 +212,6 @@ int main(void)
 		ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
 		// свойства материалов
-		ourShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
 		ourShader.setFloat("material.shininess", 64.0f);
 
 		// преобразования Вида/Проекции
@@ -231,6 +232,9 @@ int main(void)
 		// связывание карты отраженного света
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
+		// связывание карты отраженного света
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, matrixMap);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

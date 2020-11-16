@@ -5,6 +5,8 @@ struct Material {
 	sampler2D diffuse;
 	//цвет зеркального блика
     sampler2D specular;
+	//цвет зеркального блика
+    sampler2D emission;
 	//рассеивание/радиус зеркального блика
     float shininess;
 }; 
@@ -25,6 +27,8 @@ in vec2 TexCoords;
 uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
+
+vec3 calculate_emission();
 
 void main()
 {
@@ -48,8 +52,14 @@ void main()
 	vec3 reflectDir = reflect(-lightDir, norm);
 	//”гол зеркального отражени€(отраженна€ составл€юща€), 32 степень - это значение блеска свечени€
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb; 
- 
-    FragColor = vec4(ambient + diffuse + specular, 1.0);
+	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
+    FragColor = vec4(ambient + diffuse + specular + calculate_emission(), 1.0);
+
+}
+
+vec3 calculate_emission()
+{
+vec3 show = step(vec3(1.0), vec3(1.0) - texture(material.specular, TexCoords).rgb);
+return texture(material.emission, TexCoords).rgb * show;
 }

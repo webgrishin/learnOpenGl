@@ -216,14 +216,18 @@ int main(void)
 
 		//Активируем шейдер
 		ourShader.use();
-		// ourShader.setVec3("light.position", lampPos);
-		ourShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
+		ourShader.setVec3("light.position", lampPos);
 		ourShader.setVec3("viewPos", camera.Position);
 
 		// свойства света
 		ourShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 		ourShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		
+		//Параметры линейной функции затухания света
+		ourShader.setFloat("light.constant", 1.0f);
+		ourShader.setFloat("light.linear", 0.09f);
+		ourShader.setFloat("light.quadratic", 0.032f);
 
 		// свойства материалов
 		ourShader.setFloat("material.shininess", 64.0f);
@@ -256,7 +260,7 @@ int main(void)
 		{
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, cubePositions[i]);
-			GLfloat angle = 20.0f * i;
+			GLfloat angle = 20.0f * (i+1.0) * lastFrame;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			ourShader.setMat4("model", model);
 
@@ -265,7 +269,7 @@ int main(void)
 
 
 		// также отрисовываем наш объект-"лампочку"
-/* 		lampShader.use();
+		lampShader.use();
 		lampShader.setMat4("projection", projection);
 		lampShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
@@ -274,7 +278,7 @@ int main(void)
 		lampShader.setMat4("model", model);
 
 		glBindVertexArray(lampVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36); */
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);

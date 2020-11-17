@@ -11,14 +11,17 @@ struct Material {
     float shininess;
 }; 
 struct Light {
-	//Направление света
-	vec3 direction;
+    vec3 position;
 	//Интенсивность/цвет Фонового освещения
     vec3 ambient;
 	//Интенсивность/цвет рассеивания
     vec3 diffuse;
 	//Интенсивность/цвет отраженная
     vec3 specular;
+
+	float constant;
+    float linear;
+    float quadratic;
 };
 
 in vec3 FragPos;  
@@ -40,7 +43,7 @@ void main()
 	//Рассеяный свет
 	vec3 norm = normalize(Normal);
 	//Направление света
-	vec3 lightDir = normalize(-light.direction);
+	vec3 lightDir = normalize(light.position - FragPos);
 	//Угол падения света к поверъности в радианах(коэффициент)
 	float diff = max(dot(norm, lightDir), 0.0);
 	//получаем силу освещения к точке на поверхности
@@ -55,7 +58,13 @@ void main()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
-    FragColor = vec4(ambient + diffuse + specular + calculate_emission(), 1.0);
+	//Затухание
+	float distance = length(light.position - FragPos);
+	float attenuation = 1.0 / (light.constant + light.linear * distance + 
+	light.quadratic * (distance * distance));
+
+    // FragColor = vec4(ambient*attenuation + diffuse*attenuation + specular*attenuation + calculate_emission(), 1.0);
+    FragColor = vec4((ambient + diffuse + specular)*attenuation + calculate_emission(), 1.0);
 
 }
 

@@ -11,7 +11,8 @@ struct Material {
     float shininess;
 }; 
 struct Light {
-    vec3 position;
+	//Направление света
+	vec3 direction;
 	//Интенсивность/цвет Фонового освещения
     vec3 ambient;
 	//Интенсивность/цвет рассеивания
@@ -39,7 +40,7 @@ void main()
 	//Рассеяный свет
 	vec3 norm = normalize(Normal);
 	//Направление света
-	vec3 lightDir = normalize(light.position - FragPos);
+	vec3 lightDir = normalize(-light.direction);
 	//Угол падения света к поверъности в радианах(коэффициент)
 	float diff = max(dot(norm, lightDir), 0.0);
 	//получаем силу освещения к точке на поверхности

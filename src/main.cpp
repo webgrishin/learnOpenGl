@@ -165,9 +165,9 @@ int main(void)
 	glEnableVertexAttribArray(2);
 
 	//2. настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
-	GLuint lampVAO;
-	glGenVertexArrays(1, &lampVAO);
-	glBindVertexArray(lampVAO);
+	// GLuint lampVAO;
+	// glGenVertexArrays(1, &lampVAO);
+	// glBindVertexArray(lampVAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *)0);
@@ -177,12 +177,10 @@ int main(void)
 	// -----------------------------------------------------------------------------
 	GLuint diffuseMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container_2.png");
 	GLuint specularMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\container_2_specular.png");
-	GLuint matrixMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\matrix.jpg");
 
 	ourShader.use();
 	ourShader.setInt("material.diffuse", 0);
 	ourShader.setInt("material.specular", 1);
-	ourShader.setInt("material.emission", 2);
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f, 0.0f, 0.0f),
@@ -209,7 +207,8 @@ int main(void)
 
 		// рендеринг
 		// ------
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		// glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//glBindTexture(GL_TEXTURE_2D, texture);
@@ -233,6 +232,7 @@ int main(void)
 		ourShader.setVec3("light.position",  camera.Position);
 		ourShader.setVec3("light.direction", camera.Front);
 		ourShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		ourShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
 		// свойства материалов
 		ourShader.setFloat("material.shininess", 64.0f);
@@ -255,9 +255,6 @@ int main(void)
 		// связывание карты отраженного света
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
-		// связывание карты отраженного света
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, matrixMap);
 
 		glBindVertexArray(VAO);
 		// glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -274,7 +271,7 @@ int main(void)
 
 
 		// также отрисовываем наш объект-"лампочку"
-		lampShader.use();
+/* 		lampShader.use();
 		lampShader.setMat4("projection", projection);
 		lampShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
@@ -283,7 +280,7 @@ int main(void)
 		lampShader.setMat4("model", model);
 
 		glBindVertexArray(lampVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 36); */
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -293,7 +290,7 @@ int main(void)
 
 	// Опционально: освобождаем все ресурсы, как только они выполнили своё предназначение
 	glDeleteVertexArrays(1, &VAO);
-	glDeleteVertexArrays(1, &lampVAO);
+	// glDeleteVertexArrays(1, &lampVAO);
 	glDeleteBuffers(1, &VBO);
 
 	glfwTerminate();

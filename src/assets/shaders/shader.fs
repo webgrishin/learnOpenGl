@@ -5,8 +5,6 @@ struct Material {
 	sampler2D diffuse;
 	//цвет зеркального блика
     sampler2D specular;
-	//цвет зеркального блика
-    sampler2D emission;
 	//рассеивание/радиус зеркального блика
     float shininess;
 }; 
@@ -31,6 +29,8 @@ struct Light {
     vec3 direction;
 	//Угол отсечки
     float cutOff;
+	//Угол внешнего радиуса, для затухания
+	float outerCutOff;
 };
 
 in vec3 FragPos;  
@@ -41,32 +41,17 @@ uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 
-vec3 calculate_emission();
-void lighting(vec3 lightDir);
-
 void main()
 {
-	//Направление света
-	vec3 lightDir = normalize(light.position - FragPos);
-	float theta = dot(lightDir, normalize(-light.direction));
-    
-if(theta > light.cutOff) 
-{       
-  // Выполняем вычисления освещения
-  lighting(lightDir);
-}
-else // в противном случае, используем ambient-свет, чтобы вне прожектора сцена не была польностью темной
-  FragColor = vec4(light.ambient * texture(material.diffuse, TexCoords).rgb, 1.0);
 
-
-}
-void lighting(vec3 lightDir){
-	vec3 color = texture(material.diffuse, TexCoords).rgb;
+ 	vec3 color = texture(material.diffuse, TexCoords).rgb;
 	// Фоновая состовляющая
 	vec3 ambient = light.ambient * color;
 
 	//Рассеяный свет
 	vec3 norm = normalize(Normal);
+	//Направление света
+	vec3 lightDir = normalize(light.position - FragPos);
 	//Угол падения света к поверъности в радианах(коэффициент)
 	float diff = max(dot(norm, lightDir), 0.0);
 	//получаем силу освещения к точке на поверхности
@@ -81,18 +66,21 @@ void lighting(vec3 lightDir){
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
+	//прожектор (мягкие края)
+	float theta = dot(lightDir, normalize(-light.direction));
+	float epsilon   = light.cutOff - light.outerCutOff;
+	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0); 
+	diffuse *=intensity;
+	specular *=intensity;
+
 	//Затухание
 	float distance = length(light.position - FragPos);
 	float attenuation = 1.0 / (light.constant + light.linear * distance + 
 	light.quadratic * (distance * distance));
 
     // FragColor = vec4(ambient*attenuation + diffuse*attenuation + specular*attenuation + calculate_emission(), 1.0);
-    FragColor = vec4((ambient + diffuse + specular)*attenuation + calculate_emission(), 1.0);
+    FragColor = vec4((ambient + diffuse + specular)*attenuation, 1.0);
 
-}
+   
 
-vec3 calculate_emission()
-{
-	vec3 show = step(vec3(1.0), vec3(1.0) - texture(material.specular, TexCoords).rgb);
-	return texture(material.emission, TexCoords).rgb * show;
 }

@@ -216,7 +216,7 @@ int main(void)
 
 		//Активируем шейдер
 		ourShader.use();
-		ourShader.setVec3("light.position", lampPos);
+		// ourShader.setVec3("light.position", lampPos);
 		ourShader.setVec3("viewPos", camera.Position);
 
 		// свойства света
@@ -228,6 +228,11 @@ int main(void)
 		ourShader.setFloat("light.constant", 1.0f);
 		ourShader.setFloat("light.linear", 0.09f);
 		ourShader.setFloat("light.quadratic", 0.032f);
+
+		//Параметры прожектора
+		ourShader.setVec3("light.position",  camera.Position);
+		ourShader.setVec3("light.direction", camera.Front);
+		ourShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
 
 		// свойства материалов
 		ourShader.setFloat("material.shininess", 64.0f);
@@ -260,7 +265,7 @@ int main(void)
 		{
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, cubePositions[i]);
-			GLfloat angle = 20.0f * (i+1.0) * lastFrame;
+			GLfloat angle = 20.0f * i;
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			ourShader.setMat4("model", model);
 

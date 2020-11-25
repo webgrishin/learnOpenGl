@@ -26,6 +26,10 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
+
 add_subdirectory(external/glfw)
 target_link_libraries(${PROJECT_NAME} glfw)
 
@@ -34,6 +38,9 @@ target_link_libraries(${PROJECT_NAME} glad)
 
 add_subdirectory(external/glm)
 target_link_libraries(${PROJECT_NAME} glm)
+
+add_subdirectory(external/assimp)
+target_link_libraries(${PROJECT_NAME} assimp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
 

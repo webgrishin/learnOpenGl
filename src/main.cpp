@@ -10,6 +10,7 @@
 //#include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
 //#include <glm/ext/matrix_clip_space.hpp> // glm::perspective
 //#include <glm/ext/scalar_constants.hpp> // glm::pi
+#include "filesystem.h"
 
 #include <iostream>
 #include "Renderer/ShaderProgram.h"
@@ -44,6 +45,8 @@ GLuint loadTexture(const char *path);
 
 int main(void)
 {
+	std::string tt = FileSystem::getPath("src/assets/shaders/shader.vs");
+	std::cout << "path " << tt << std::endl;
 	/* Initialize the library */
 	if (!glfwInit())
 	{
@@ -91,11 +94,13 @@ int main(void)
 	 * and "SimpleCoding" https://www.youtube.com/playlist?list=PL6x9Hnsyqn2XU7vc8-oFLojbibK91fVd-*/
 	// Компилирование нашей шейдерной программы
 
-	RenderEngine::ShaderProgram ourShader("C:\\learnOpenGl-VS\\src\\assets\\shaders\\shader.vs", "C:\\learnOpenGl-VS\\src\\assets\\shaders\\shader.fs");
+	//Загрузка файла относительно бинарника
+	RenderEngine::ShaderProgram ourShader("assets/shaders/shader.vs", "assets/shaders/shader.fs");
 	if (!ourShader.isCompiled())
 		return -1;
 
-	RenderEngine::ShaderProgram lampShader("C:\\learnOpenGl-VS\\src\\assets\\shaders\\lamp.vs", "C:\\learnOpenGl-VS\\src\\assets\\shaders\\lamp.fs");
+	//загрузка файла относительно проекта
+	RenderEngine::ShaderProgram lampShader(FileSystem::getPath("src/assets/shaders/lamp.vs"), FileSystem::getPath("src/assets/shaders/lamp.fs"));
 	if (!lampShader.isCompiled())
 		return -1;
 
@@ -197,8 +202,8 @@ int main(void)
 
 	//загрузка текстур
 	// -----------------------------------------------------------------------------
-	GLuint diffuseMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\wooden_container_2.png");
-	GLuint specularMap = loadTexture("C:\\learnOpenGl-VS\\src\\assets\\textures\\container_2_specular.png");
+	GLuint diffuseMap = loadTexture("assets/textures/wooden_container_2.png");
+	GLuint specularMap = loadTexture("assets/textures/container_2_specular.png");
 
 	ourShader.use();
 	ourShader.setInt("material.diffuse", 0);

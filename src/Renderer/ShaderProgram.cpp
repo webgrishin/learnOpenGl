@@ -6,7 +6,7 @@
 // конструктор генерирует шейдер на лету
 // ------------------------------------------------------------------------
 namespace RenderEngine {
-	ShaderProgram::ShaderProgram(const char* vertexPath, const char* fragmentPath) {
+	ShaderProgram::ShaderProgram(const std::string& vertexPath, const std::string& fragmentPath) {
 		// 1. получение исходного кода вершинного/фрагментного шейдера из переменной filePath
 		std::string vertexCode;
 		std::string fragmentCode;
@@ -17,8 +17,8 @@ namespace RenderEngine {
 		fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		try {
 			// открываем файлы
-			vShaderFile.open(vertexPath);
-			fShaderFile.open(fragmentPath);
+			vShaderFile.open(vertexPath.c_str());
+			fShaderFile.open(fragmentPath.c_str());
 			std::stringstream vShaderStream, fShaderStream;
 			// читаем содержимое файловых буферов
 			vShaderStream << vShaderFile.rdbuf();

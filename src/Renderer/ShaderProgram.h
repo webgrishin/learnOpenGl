@@ -20,7 +20,7 @@ namespace RenderEngine {
 
         // конструктор генерирует шейдер на лету
         // ------------------------------------------------------------------------
-        ShaderProgram(const char *vertexPath, const char *fragmentPath);
+        ShaderProgram(const std::string& vertexPath, const std::string& fragmentPath);
 
         ~ShaderProgram();
 

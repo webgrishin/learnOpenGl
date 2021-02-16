@@ -7,9 +7,7 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
-        src/Renderer/ShaderProgram.cpp
         src/Renderer/ShaderProgram.h
-        src/Renderer/Camera.cpp
         src/Renderer/Camera.h
         src/Renderer/Model.h
         src/stb_image.cpp

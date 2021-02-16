@@ -94,7 +94,8 @@ int main(void)
 
     // компилирование нашей шейдерной программы
 	//Загрузка файла относительно бинарника
-	RenderEngine::ShaderProgram ourShader("assets/shaders/1.model_loading.vs", "assets/shaders/1.model_loading.fs");
+	RenderEngine::ShaderProgram ourShader("assets/shaders/shader.vs", "assets/shaders/shader.fs");
+	// RenderEngine::ShaderProgram ourShader("assets/shaders/1.model_loading.vs", "assets/shaders/1.model_loading.fs");
 	if (!ourShader.isCompiled())
 		return -1;
 
@@ -156,13 +157,18 @@ int main(void)
 
 		//Активируем шейдер
 		ourShader.use();
-/* 		ourShader.setVec3("viewPos", camera.Position);
+ 		ourShader.setVec3("viewPos", camera.Position);
+		// свойства материалов
+		ourShader.setFloat("material.shininess", 32.0f);
 
         // направленный свет
         ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-        ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        // ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        // ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        // ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+		ourShader.setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
+		ourShader.setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
+		ourShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
         // прожектор (фонарик)
         ourShader.setVec3("spotLight.position", camera.Position);
         ourShader.setVec3("spotLight.direction", camera.Front);
@@ -174,7 +180,7 @@ int main(void)
         ourShader.setFloat("spotLight.quadratic", 0.032);
         ourShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
         ourShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
-
+/*
 		// точечные источники света
 		for (int i = 0; i < NR_POINT_LIGHTS; i++){
 			char buffer[64];

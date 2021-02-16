@@ -73,6 +73,9 @@ uniform DirLight dirLight;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform SpotLight spotLight;
 uniform Material material;
+// uniform sampler2D texture_diffuse;
+// uniform sampler2D texture_specular;
+// uniform sampler2D texture_normal;
 
 //Вспомогательные функции
 	//Фоновый+рассеянный+отраженный свет
@@ -93,8 +96,8 @@ void main()
     // фаза 1: направленное освещение
     vec3 result = CalcDirLight(dirLight, norm, viewDir);
     // phase 2: точечные источники света
-    for(int i = 0; i < NR_POINT_LIGHTS; i++)
-        result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
+    // for(int i = 0; i < NR_POINT_LIGHTS; i++)
+        // result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
     // фаза 3: прожектор
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
     
@@ -109,6 +112,9 @@ vec3 _calcLight(DirLight light, vec3 normal, vec3 viewDir){
 	//Угол зеркального отражения(отраженная составляющая), shininess степень - это значение блеска свечения
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     // совмещаем результаты
+    // vec3 ambient = light.ambient * vec3(texture(texture_diffuse, TexCoords));
+    // vec3 diffuse = light.diffuse * diff * vec3(texture(texture_diffuse, TexCoords));
+    // vec3 specular = light.specular * spec * vec3(texture(texture_specular, TexCoords));
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
     vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));

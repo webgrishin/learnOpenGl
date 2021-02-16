@@ -79,7 +79,8 @@ public:
                 number = std::to_string(heightNr++); // конвертируем unsigned int в строку
 
             //2. Теперь устанавливаем сэмплер на нужный текстурный юнит
-            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+            glUniform1i(glGetUniformLocation(shader.ID, ("material." + name.substr(name.find("_")+1, name.length()) + number).c_str()), i);
+            // glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
             //3. и связываем текстуру с активированным текстурным юнитом(1)
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }

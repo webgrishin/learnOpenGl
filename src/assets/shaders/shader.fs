@@ -62,6 +62,13 @@ struct AttenuationLight {
     float quadratic;
 };
 
+struct StateLights
+{
+	bool onDirLight;
+	bool onSpotLight;
+	bool onPointsLight;
+};
+
 #define NR_POINT_LIGHTS 4
 
 in vec3 FragPos;  
@@ -73,9 +80,7 @@ uniform DirLight dirLight;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform SpotLight spotLight;
 uniform Material material;
-// uniform sampler2D texture_diffuse;
-// uniform sampler2D texture_specular;
-// uniform sampler2D texture_normal;
+uniform StateLights stateLight;
 
 //¬спомогательные функции
 	//‘оновый+рассе€нный+отраженный свет
@@ -89,19 +94,26 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main()
 {
-    vec3 norm = normalize(Normal);
-	//Ќаправление взгл€да
-	vec3 viewDir = normalize(viewPos - FragPos);
+    if (stateLight.onDirLight){
+        vec3 norm = normalize(Normal);
+        //Ќаправление взгл€да
+        vec3 viewDir = normalize(viewPos - FragPos);
 
-    // фаза 1: направленное освещение
-    vec3 result = CalcDirLight(dirLight, norm, viewDir);
-    // phase 2: точечные источники света
-    // for(int i = 0; i < NR_POINT_LIGHTS; i++)
-        // result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
-    // фаза 3: прожектор
-    result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
-    
-    FragColor = vec4(result, 1.0);
+        // фаза 1: направленное освещение
+        vec3 result = CalcDirLight(dirLight, norm, viewDir);
+        // phase 2: точечные источники света
+        if (stateLight.onPointsLight){
+            for(int i = 0; i < NR_POINT_LIGHTS; i++)
+                result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
+        }
+        // фаза 3: прожектор
+        if(stateLight.onSpotLight)
+            result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+        
+        FragColor = vec4(result, 1.0);
+    }
+    else
+        FragColor = texture(material.diffuse, TexCoords);
 }
 
 vec3 _calcLight(DirLight light, vec3 normal, vec3 viewDir){

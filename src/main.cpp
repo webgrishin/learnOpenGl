@@ -115,7 +115,9 @@ int main(void)
 
 	// загрузка моделей
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	Model ourModel("assets/objects/backpack/backpack.obj");
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glfwSwapBuffers(window);
+	Model ourModel(window, "assets/objects/backpack/backpack.obj");
 
 	//2. настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
 	/* 	GLuint VBO, lampVAO;
@@ -211,13 +213,13 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_L && action == GLFW_PRESS)
+	if (key == GLFW_KEY_L && action == GLFW_PRESS)
 		stateLight.onDirLight = !stateLight.onDirLight;
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
+	if (key == GLFW_KEY_P && action == GLFW_PRESS)
 		stateLight.onPointsLight = !stateLight.onPointsLight;
-    if (key == GLFW_KEY_F && action == GLFW_PRESS)
+	if (key == GLFW_KEY_F && action == GLFW_PRESS)
 		stateLight.onSpotLight = !stateLight.onSpotLight;
 }
 

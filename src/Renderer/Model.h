@@ -31,10 +31,12 @@ public:
     vector<Mesh> meshes;
     string directory;
     bool gammaCorrection;
+    GLFWwindow* window;
 
     // конструктор, в качестве аргумента использует пусть до 3d-модели
-    Model(string const &path, bool gamma = false) : gammaCorrection(gamma)
+    Model(GLFWwindow* window, string const &path, bool gamma = false) : gammaCorrection(gamma)
     {
+        this->window = window;
         loadModel(path);
     }
 
@@ -49,6 +51,7 @@ private:
     // загружает модель с помощью Assimp и сохраняет полученные меши в векторе meshes.
     void loadModel(string const &path)
     {
+        cout << "Read file: " << path << " ...." << endl;
         // чтение файла с помощью ASSIMP
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
@@ -61,6 +64,7 @@ private:
         // получение пути к файлу
         directory = path.substr(0, path.find_last_of('/'));
 
+        cout << "Data processing ... " << endl;
         // рекурсивная обработка корневого узла ASSIMP
         processNode(scene->mRootNode, scene);
     }
@@ -68,7 +72,11 @@ private:
     // рекурсивная обработка узла. Обрабатывает каждый отдельный меш, расположенный в узле, и повторяет этот процесс для своих дочерних углов (если таковы вообще имеются).
     void processNode(aiNode *node, const aiScene *scene)
     {
+		// glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// glfwSwapBuffers(window);
         // обрабатываем каждый меш текущего узла
+        cout << "mNumMeshes: " << node->mNumMeshes << "mNumChildren: " << node->mNumChildren << "; sum: " << (node->mNumMeshes + node->mNumChildren) << endl;
         for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
             // узел содержит только индексы объектов в сцене

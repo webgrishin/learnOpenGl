@@ -10,7 +10,7 @@ add_executable(${PROJECT_NAME}
         src/Renderer/ShaderProgram.h
         src/Renderer/Camera.h
         src/Renderer/Model.h
-        src/Renderer/Lighting.h
+        src/Renderer/StaticModel.h
         src/stb_image.cpp
         src/stb_image.h
         src/assets/shaders/lamp.vs

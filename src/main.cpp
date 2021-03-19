@@ -16,7 +16,7 @@
 #include "Renderer/ShaderProgram.h"
 #include "Renderer/Camera.h"
 #include "Renderer/Model.h"
-#include "Renderer/Lighting.h"
+#include "Renderer/StaticModel.h"
 #include "stb_image.h"
 
 /*
@@ -38,8 +38,8 @@ bool firstMouse = true;
 struct StateLights
 {
 	bool onDirLight = true;
-	bool onSpotLight = true;
-	bool onPointsLight = true;
+	bool onSpotLight = false;
+	bool onPointsLight = false;
 };
 StateLights stateLight;
 
@@ -92,15 +92,20 @@ int main(void)
 		std::cerr << "gladLoadGL failed!" << std::endl;
 		return -1;
 	}
-	// конфигурирование глобального состояния OpenGL
-	glEnable(GL_DEPTH_TEST);
 
 	std::cout << "VideoCard: " << glGetString(GL_RENDERER) << std::endl;
 	std::cout << "OpenGl version: " << glGetString(GL_VERSION) << std::endl;
 	//    std::cout << "OpenGl: " << GLVersion.major << "." << GLVersion.minor << std::endl;
 
-	// говорим stb_image.h чтобы он перевернул загруженные текстуры относительно y-оси (до загрузки модели).
-	stbi_set_flip_vertically_on_load(true);
+
+	// конфигурирование глобального состояния OpenGL
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);//default. Если тест глубины всегда проходит успешно (GL_ALWAYS glDisable(GL_DEPTH_TEST))
+    glEnable(GL_STENCIL_TEST);
+	// glStencilMask(0xFF); // default
+	glStencilFunc(GL_ALWAYS, 0, 0xFF); //default
+    // glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //default
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	// компилирование нашей шейдерной программы
 	//Загрузка файла относительно бинарника
@@ -108,32 +113,30 @@ int main(void)
 	if (!ourShader.isCompiled())
 		return -1;
 
-	//загрузка файла относительно проекта
-	/* 	RenderEngine::ShaderProgram lampShader(FileSystem::getPath("src/assets/shaders/lamp.vs"), FileSystem::getPath("src/assets/shaders/lamp.fs"));
+	RenderEngine::ShaderProgram floorShader("assets/shaders/shader.vs", "assets/shaders/floor.fs");
+	if (!ourShader.isCompiled())
+		return -1;
+		
+	RenderEngine::ShaderProgram lampShader("assets/shaders/lamp.vs", "assets/shaders/lamp.fs");
 	if (!lampShader.isCompiled())
-		return -1; */
+		return -1;
+
+	RenderEngine::ShaderProgram stancilShader("assets/shaders/lamp.vs", "assets/shaders/stencil_single_color.fs");
+	if (!stancilShader.isCompiled())
+		return -1;
 
 	// загрузка моделей
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// glClear(GL_COLOR_BUFFER_BIT);
 	glfwSwapBuffers(window);
+	// говорим stb_image.h чтобы он перевернул загруженные текстуры относительно y-оси (до загрузки модели).
+	stbi_set_flip_vertically_on_load(true);
 	Model ourModel(window, "assets/objects/backpack/backpack.obj");
-
-	//2. настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
-	/* 	GLuint VBO, lampVAO;
-	glGenVertexArrays(1, &lampVAO);
-	glGenBuffers(1, &VBO);
-	glBindVertexArray(lampVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *)0);
-	glEnableVertexAttribArray(0); */
-
+	// Model ourModel(window, "assets/objects/fireplace_bricks/13111_fireplacebricks_v2_l2.obj");
+	// Model ourModel(window, "assets/objects/fireplace/fireplace.obj");
 	//Активируем шейдер
-	ourShader.use();
-	RenderEngine::Lighting lighting;
-	lighting.OnDirLight(ourShader);
-	lighting.OnPointsLight(ourShader);
+	RenderEngine::StaticModel staticModel;
+
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -150,13 +153,18 @@ int main(void)
 		// ------
 		// glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glStencilMask(0x00); 
 
+		ourShader.use();
+		staticModel.OnDirLight(ourShader);
+		staticModel.OnPointsLight(ourShader);
+		staticModel.OnSpotLight(ourShader, camera);
 		ourShader.setVec3("viewPos", camera.Position);
-		lighting.OnSpotLight(ourShader, camera);
 		ourShader.setBool("stateLight.onDirLight", stateLight.onDirLight);
 		ourShader.setBool("stateLight.onSpotLight", stateLight.onSpotLight);
 		ourShader.setBool("stateLight.onPointsLight", stateLight.onPointsLight);
+
 
 		// преобразования Вида/Проекции
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)WINDOW_WIDTH / (GLfloat)WINDOW_HEIGHT, 0.1f, 100.0f);
@@ -164,29 +172,34 @@ int main(void)
 		ourShader.setMat4("projection", projection);
 		ourShader.setMat4("view", view);
 
-		// мировое преобразование
+		// Рендерим гитару
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -0.2f, 0.0f)); // смещаем вниз чтобы быть в центре сцены
-		model = glm::scale(model, glm::vec3(0.65f, 0.65f, 0.65f));	 // объект слишком большой для нашей сцены, поэтому немного уменьшим его
+		model = glm::translate(model, glm::vec3(0.0f, 0.2f, 0.0f)); // Ставим на пол
+		model = glm::scale(model, glm::vec3(0.65f));	 // объект слишком большой для нашей сцены, поэтому немного уменьшим его
+
+		// model = glm::translate(model, glm::vec3(0.0f, -0.9f, 0.0f)); // Ставим на пол
+		// model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		// model = glm::scale(model, glm::vec3(0.01f));	 // объект слишком большой для нашей сцены, поэтому немного уменьшим его
 		ourShader.setMat4("model", model);
 		ourModel.Draw(ourShader);
 
-		// также отрисовываем объект лампы
-		/* 		lampShader.use();
-		lampShader.setMat4("projection", projection);
-		lampShader.setMat4("view", view);
+		// Рендерим пол
+		floorShader.use();
+		staticModel.OnDirLight(floorShader);
+		staticModel.OnPointsLight(floorShader);
+		staticModel.OnSpotLight(floorShader, camera);
+		floorShader.setVec3("viewPos", camera.Position);
+		floorShader.setBool("stateLight.onDirLight", stateLight.onDirLight);
+		floorShader.setBool("stateLight.onSpotLight", stateLight.onSpotLight);
+		floorShader.setBool("stateLight.onPointsLight", stateLight.onPointsLight);
+		floorShader.setMat4("projection", projection);
+		floorShader.setMat4("view", view);
+		staticModel.FloorDraw(floorShader);
 
-		// а теперь мы отрисовывает столько ламп, сколько у нас есть точечных источников света
-		glBindVertexArray(lampVAO);
-		for (GLuint i = 0; i < NR_POINT_LIGHTS; i++)
-		{
-			lampShader.setVec3("fragColor", pointLightColors[i]);
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, pointLightPositions[i]);
-			model = glm::scale(model, glm::vec3(0.2f)); // куб, меньшего размера
-			lampShader.setMat4("model", model);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		} */
+		// Рендерим лампочки
+		if (stateLight.onPointsLight){
+			staticModel.LampsDraw(lampShader, projection, view, stancilShader);
+		}
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);

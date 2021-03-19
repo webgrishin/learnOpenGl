@@ -21,7 +21,7 @@
 #include <vector>
 using namespace std;
 
-unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
+unsigned int TextureFromFile(const char *path, const string &directory = "", bool gamma = false);
 
 class Model 
 {
@@ -211,7 +211,8 @@ private:
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
 {
     string filename = string(path);
-    filename = directory + '/' + filename;
+    if (directory != "")
+        filename = directory + '/' + filename;
 
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -240,7 +241,7 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     }
     else
     {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
+        cout << "Texture failed to load at path: " << path << endl;
     }
 
     stbi_image_free(data);

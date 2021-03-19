@@ -93,21 +93,20 @@ vec3 _calcLight(DirLight light, vec3 normal, vec3 viewDir);
     //Затухание
 float _calcAttenuation(AttenuationLight light, vec3 fragPos);
 // Прототипы функций
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main()
 {
         vec3 norm = normalize(Normal);
-        // vec3 normal = texture(material.normal, TexCoords);
         //Направление взгляда
         vec3 viewDir = normalize(viewPos - FragPos);
         vec3 result = vec3(0.0);
 
         // фаза 1: направленное освещение
         if (stateLight.onDirLight)
-            result = CalcDirLight(dirLight, norm, FragPos, viewDir);
+            result = CalcDirLight(dirLight, norm, viewDir);
         // phase 2: точечные источники света
         if (stateLight.onPointsLight){
             for(int i = 0; i < NR_POINT_LIGHTS; i++)
@@ -134,7 +133,7 @@ vec3 _calcLight(DirLight light, vec3 normal, vec3 viewDir){
     // совмещаем результаты
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+    vec3 specular = light.specular * spec * vec3(0.2);
     return (ambient + diffuse + specular);
 }
 
@@ -144,10 +143,11 @@ float _calcAttenuation(AttenuationLight light, vec3 fragPos){
 }
 
 // вычисляем цвет при использовании направленного света.
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 {
 	//Направление света
-    light.direction = normalize(-(light.position - fragPos));
+    light.direction = normalize(-(light.position - FragPos));
+    // light.direction = normalize(light.position - FragPos);
     // light.direction = normalize(-light.direction);
 	return _calcLight(light, normal, viewDir);
 }

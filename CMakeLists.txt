@@ -10,13 +10,23 @@ add_executable(${PROJECT_NAME}
         src/Renderer/ShaderProgram.h
         src/Renderer/Camera.h
         src/Renderer/Model.h
+        src/Renderer/Brush.h
+        src/Renderer/Brush.cpp
+        src/Renderer/Fire.h
+        src/Renderer/Fire.cpp
         src/Renderer/StaticModel.h
+        src/Renderer/particle_generator.h
+        src/Renderer/particle_generator.cpp
         src/stb_image.cpp
         src/stb_image.h
         src/assets/shaders/lamp.vs
         src/assets/shaders/lamp.fs
+        src/assets/shaders/floor.fs
+        src/assets/shaders/stencil_single_color.fs
         src/assets/shaders/shader.vs
         src/assets/shaders/shader.fs
+        src/assets/shaders/point.vs
+        src/assets/shaders/point.fs
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC cxx_std_17)

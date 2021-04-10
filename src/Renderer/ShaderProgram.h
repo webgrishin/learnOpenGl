@@ -20,8 +20,12 @@ namespace RenderEngine
     public:
         unsigned int ID;
 
+        ShaderProgram(){}
         // конструктор генерирует шейдер на лету
-        ShaderProgram(const std::string &vertexPath, const std::string &fragmentPath)
+        ShaderProgram(const std::string &vertexPath, const std::string &fragmentPath){
+            this->create(vertexPath, fragmentPath);
+        }
+        void create(const std::string &vertexPath, const std::string &fragmentPath)
         {
             // 1. получение исходного кода вершинного/фрагментного шейдера из переменной filePath
             std::string vertexCode;
@@ -112,6 +116,15 @@ namespace RenderEngine
         void setVec3(const std::string &name, float x, float y, float z) const
         {
             glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
+        }
+
+        void setVec4(const std::string &name, glm::vec4 &value) const
+        {
+            glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+        }
+        void setVec4(const std::string &name, float x, float y, float z, float a) const
+        {
+            glUniform4f(glGetUniformLocation(ID, name.c_str()), x, y, z, a);
         }
 
         void setBool(const std::string &name, bool value) const

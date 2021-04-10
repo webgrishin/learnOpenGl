@@ -1,0 +1,10 @@
+(1+1/x)^x;
+exp(x);
+sin(x);
+sin(x^2)* exp(-x);
+sin(x*5)*exp(-x);
+
+sin(x*5)/-x^2;
+sin(x)*exp(-0.1*x);
+
+sin(x)*exp(-x/10);

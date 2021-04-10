@@ -18,6 +18,8 @@
 #include "Renderer/Model.h"
 #include "Renderer/StaticModel.h"
 #include "stb_image.h"
+// #include "Renderer/particle_generator.h"
+#include "Renderer/Fire.h"
 
 /*
  * base example code for setting up-window and opengl context taken from site https://www.glfw.org/documentation.html
@@ -99,13 +101,13 @@ int main(void)
 
 
 	// конфигурирование глобального состояния OpenGL
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);//default. Если тест глубины всегда проходит успешно (GL_ALWAYS glDisable(GL_DEPTH_TEST))
-    glEnable(GL_STENCIL_TEST);
+    // glEnable(GL_STENCIL_TEST);
 	// glStencilMask(0xFF); // default
 	glStencilFunc(GL_ALWAYS, 0, 0xFF); //default
     // glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //default
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	// компилирование нашей шейдерной программы
 	//Загрузка файла относительно бинарника
@@ -131,12 +133,21 @@ int main(void)
 	glfwSwapBuffers(window);
 	// говорим stb_image.h чтобы он перевернул загруженные текстуры относительно y-оси (до загрузки модели).
 	stbi_set_flip_vertically_on_load(true);
-	Model ourModel(window, "assets/objects/backpack/backpack.obj");
+	// Model ourModel(window, "assets/objects/backpack/backpack.obj");
 	// Model ourModel(window, "assets/objects/fireplace_bricks/13111_fireplacebricks_v2_l2.obj");
 	// Model ourModel(window, "assets/objects/fireplace/fireplace.obj");
 	//Активируем шейдер
 	RenderEngine::StaticModel staticModel;
 
+	//режим отсечения граней
+	// glEnable(GL_CULL_FACE);
+	// ParticleGenerator particleGen;
+	Fire fire(vec2(-0.5f, -1.0f), 0.3f, WINDOW_WIDTH, WINDOW_HEIGHT);
+	
+	glEnable(GL_BLEND);
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -154,24 +165,25 @@ int main(void)
 		// glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		glStencilMask(0x00); 
+		// glStencilMask(0x00); 
 
-		ourShader.use();
+/* 		ourShader.use();
 		staticModel.OnDirLight(ourShader);
 		staticModel.OnPointsLight(ourShader);
 		staticModel.OnSpotLight(ourShader, camera);
 		ourShader.setVec3("viewPos", camera.Position);
 		ourShader.setBool("stateLight.onDirLight", stateLight.onDirLight);
 		ourShader.setBool("stateLight.onSpotLight", stateLight.onSpotLight);
-		ourShader.setBool("stateLight.onPointsLight", stateLight.onPointsLight);
+		ourShader.setBool("stateLight.onPointsLight", stateLight.onPointsLight); */
 
-
-		// преобразования Вида/Проекции
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)WINDOW_WIDTH / (GLfloat)WINDOW_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		ourShader.setMat4("projection", projection);
-		ourShader.setMat4("view", view);
 
+/* 		ourShader.setMat4("projection", projection);
+		ourShader.setMat4("view", view); */
+
+/* 
+		// преобразования Вида/Проекции
 		// Рендерим гитару
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.2f, 0.0f)); // Ставим на пол
@@ -181,10 +193,16 @@ int main(void)
 		// model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 		// model = glm::scale(model, glm::vec3(0.01f));	 // объект слишком большой для нашей сцены, поэтому немного уменьшим его
 		ourShader.setMat4("model", model);
-		ourModel.Draw(ourShader);
+		// ourModel.Draw(ourShader);
+ */
+		// staticModel.Draw(projection, view);
+
+		fire.Draw(projection, view);
+		// particleGen.Draw(projection, view);
+		// particleGen.Update4();
 
 		// Рендерим пол
-		floorShader.use();
+/* 		floorShader.use();
 		staticModel.OnDirLight(floorShader);
 		staticModel.OnPointsLight(floorShader);
 		staticModel.OnSpotLight(floorShader, camera);
@@ -200,7 +218,7 @@ int main(void)
 		if (stateLight.onPointsLight){
 			staticModel.LampsDraw(lampShader, projection, view, stancilShader);
 		}
-
+ */
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
 		/* Poll for and process events */

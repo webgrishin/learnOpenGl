@@ -129,12 +129,71 @@ namespace RenderEngine
         GLuint floorTexture;
         //Лампы
         GLuint lampVAO;
+        GLfloat cubeVertices[180] = {
+            // координаты          // текстурные координаты
+            // Задняя грань
+            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // нижняя-левая
+            0.5f, 0.5f, -0.5f, 1.0f, 1.0f,   // верхняя-правая
+            0.5f, -0.5f, -0.5f, 1.0f, 0.0f,  // нижняя-правая
+            0.5f, 0.5f, -0.5f, 1.0f, 1.0f,   // верхняя-правая
+            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // нижняя-левая
+            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,  // верхняя-левая
+
+            // Передняя грань
+            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // нижняя-левая
+            0.5f, -0.5f, 0.5f, 1.0f, 0.0f,  // нижняя-правая
+            0.5f, 0.5f, 0.5f, 1.0f, 1.0f,   // верхняя-правая
+            0.5f, 0.5f, 0.5f, 1.0f, 1.0f,   // верхняя-правая
+            -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,  // верхняя-левая
+            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // нижняя-левая
+
+            // Грань слева
+            -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // верхняя-правая
+            -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,  // верхняя-левая
+            -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // нижняя-левая
+            -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // нижняя-левая
+            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,  // нижняя-правая
+            -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // верхняя-правая
+
+            // Грань справа
+            0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // верхняя-левая
+            0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // нижняя-правая
+            0.5f, 0.5f, -0.5f, 1.0f, 1.0f,  // верхняя-правая
+            0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // нижняя-правая
+            0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // верхняя-левая
+            0.5f, -0.5f, 0.5f, 0.0f, 0.0f,  // нижняя-левая
+
+            // Нижняя грань
+            -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // верхняя-правая
+            0.5f, -0.5f, -0.5f, 1.0f, 1.0f,  // верхняя-левая
+            0.5f, -0.5f, 0.5f, 1.0f, 0.0f,   // нижняя-левая
+            0.5f, -0.5f, 0.5f, 1.0f, 0.0f,   // нижняя-левая
+            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,  // нижняя-правая
+            -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // верхняя-правая
+
+            // Верхняя грань
+            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, // верхняя-левая
+            0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // нижняя-правая
+            0.5f, 0.5f, -0.5f, 1.0f, 1.0f,  // верхняя-правая
+            0.5f, 0.5f, 0.5f, 1.0f, 0.0f,   // нижняя-правая
+            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,  // верхняя-левая
+            -0.5f, 0.5f, 0.5f, 0.0f, 0.0f  // нижняя-левая
+        };
+        //Куб
+        GLuint cubeVAO, cubeVBO;
+        GLuint cubeTexture;
+        mat4 projection;
+        mat4 view;
+        RenderEngine::ShaderProgram shaderCube = RenderEngine::ShaderProgram();
 
         StaticModel()
         {
             initLightings();
             initFloor();
             initLamps();
+            initCube();
+            initSceneBlending();
+            initPoint();
         }
         // точечные источники света
         void OnPointsLight(RenderEngine::ShaderProgram &shader)
@@ -246,24 +305,128 @@ namespace RenderEngine
 
             glBindVertexArray(0);
         }
+        void Draw(mat4 projection, mat4 view)
+        {
+            this->projection = projection;
+            this->view = view;
+            // this->drawSimpleCube();
+            this->DrawPoint();
+        }
+        void drawSimpleCube()
+        {
+            this->drawCube(this->shaderCube, vec3(0.5f, 0.5f, 0.0f));
+        }
+        void drawCube(RenderEngine::ShaderProgram &shader, vec3 position)
+        {
+            shader.use();
+            shader.setInt("texture", 0);
+            shader.setMat4("projection", this->projection);
+            shader.setMat4("view", this->view);
+            // кубы
+            glBindVertexArray(this->cubeVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, this->cubeTexture);
+            glm::mat4 model = glm::mat4(1.0f);
+            // model = glm::translate(model, position);
+            // glm::vec3(-1.0f, 0.0f, -1.0f)
+            shader.setMat4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+        void DrawPoint()
+        {
+            this->shaderPoint.use();
+            this->shaderPoint.setMat4("projection", this->projection);
+            this->shaderPoint.setMat4("view", this->view);
+            glBindVertexArray(this->pointVAO);
+            GLfloat r, g, b, dr, dg, db, width = 800.0f;
+            GLfloat x = 0.0f, y = -1.0f, dy = 2.0f/width;
+            r = 1.0f;
+            g = 1.0f;
+            b = 0.0f;
+            dr = 0.0f;
+            dg = -1.0f / width;
+            db = dr;
+            for (GLfloat i = 0.0f; i < 2.0f; i += dy)
+            {
+                r += dr;
+                g += dg;
+                b += db;
+                this->shaderPoint.setVec3("fragColor", vec3(r,g,b));
+                this->drawPoint(this->shaderPoint, vec3(x, y, 0.0f));
+                y = y + dy;
+                x = sin(i * 5.0f);
+            }
+        }
+        void drawPoint(RenderEngine::ShaderProgram &shader, vec3 position)
+        {
+            // кубы
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, position);
+            shader.setMat4("model", model);
+            // glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawArrays(GL_POINTS, 0, 1);
+        }
 
         ~StaticModel()
         {
         }
 
     protected:
+        GLuint pointVAO;
+        RenderEngine::ShaderProgram shaderPoint;
+/*         void _drawPoints(vec3 bC, vec3 eC, GLfloat width, GLfloat start){
+            vec3 dC;
+            dC.r = (eC.r - bC.r) / width;
+            dC.g = (eC.g - bC.g) / width;
+            dC.b = (eC.b - bC.b) / width;
+            GLfloat end = width/400.0f;
+            GLfloat dy = end / width;
+            GLfloat x = 0.0f, y = -1.0f;
+            for (GLfloat i = start; i < end; i += dy)
+            {
+                bC.r += dC.r;
+                bC.g += dC.g;
+                bC.b += dC.b;
+                this->shaderPoint.setVec3("fragColor", bC);
+                this->drawPoint(this->shaderPoint, vec3(x, y, 0.0f));
+                y = y + dy;
+                x = sin(i * 5.0f);
+            }
+
+        } */
+        void initPoint()
+        {
+            shaderPoint.create("assets/shaders/point.vs", "assets/shaders/point.fs");
+            GLfloat point[] = {0.0f, 0.0f, 0.0f};
+            /*             GLfloat point[] = {
+                -0.5f, -0.5f, 0.0f,
+                0.5f, -0.5f, 0.0f,
+                0.0f, 0.5f, 0.0f}; */
+            GLuint pointVBO;
+            glGenVertexArrays(1, &this->pointVAO);
+            glGenBuffers(1, &pointVBO);
+            glBindVertexArray(this->pointVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, pointVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+            glBindVertexArray(0);
+        }
+
         void initFloor()
         {
             floorTexture = TextureFromFile("assets/textures/metal.jpg");
             float planeVertices[] = {
                 // координаты          // текстурные координаты (обратите внимание, что мы устанавливаем их значения больше единицы (в сочетании с GL_REPEAT в качестве режима наложения текстур). Это приведет к повторению текстуры пола)
-                5.0f, 0.0f, 5.0f,   0.0f,  1.0f,  0.0f,  2.0f, 0.0f,
-                -5.0f, 0.0f, 5.0f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-                -5.0f, 0.0f, -5.0f, 0.0f,  1.0f,  0.0f,  0.0f, 2.0f,
+                5.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, 2.0f, 0.0f,
+                -5.0f, 0.0f, -5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f,
+                -5.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 
-                5.0f, 0.0f, 5.0f, 0.0f,  1.0f,  0.0f,  2.0f, 0.0f,
-                -5.0f, 0.0f, -5.0f, 0.0f,  1.0f,  0.0f,  0.0f, 2.0f,
-                5.0f, 0.0f, -5.0f, 0.0f,  1.0f,  0.0f,  2.0f, 2.0f};
+                5.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, 2.0f, 0.0f,
+                5.0f, 0.0f, -5.0f, 0.0f, 1.0f, 0.0f, 2.0f, 2.0f,
+                -5.0f, 0.0f, -5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f};
             unsigned int planeVBO;
             glGenVertexArrays(1, &planeVAO);
             glGenBuffers(1, &planeVBO);
@@ -280,50 +443,6 @@ namespace RenderEngine
         }
         void initLamps()
         {
-            GLfloat vertices[] = {
-                // координаты
-                -0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                0.5f, 0.5f, -0.5f,
-                0.5f, 0.5f, -0.5f,
-                -0.5f, 0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
-
-                -0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, -0.5f, 0.5f,
-
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-
-                -0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                -0.5f, -0.5f, 0.5f,
-                -0.5f, -0.5f, -0.5f,
-
-                -0.5f, 0.5f, -0.5f,
-                0.5f, 0.5f, -0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, -0.5f};
-
             //2. настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
             GLuint lampVBO;
             glGenVertexArrays(1, &lampVAO);
@@ -331,10 +450,11 @@ namespace RenderEngine
             glGenBuffers(1, &lampVBO);
 
             glBindBuffer(GL_ARRAY_BUFFER, lampVBO);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
             glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void *)0);
+            glBindVertexArray(0);
         }
         void initLightings()
         {
@@ -392,6 +512,24 @@ namespace RenderEngine
             spotLight.quadratic = qaudratic;
             spotLight.cutOff = cos(glm::radians(12.5f));
             spotLight.outerCutOff = cos(glm::radians(15.0f));
+        }
+        void initCube()
+        {
+            cubeTexture = TextureFromFile("assets/textures/wooden_container_2.png");
+            shaderCube.create("assets/shaders/simpleCubeShader.vs", "assets/shaders/simpleCubeShader.fs");
+            glGenVertexArrays(1, &cubeVAO);
+            glGenBuffers(1, &cubeVBO);
+            glBindVertexArray(cubeVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+            glEnableVertexAttribArray(2);
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+            glBindVertexArray(0);
+        }
+        void initSceneBlending()
+        {
         }
     };
 } // namespace RenderEngine

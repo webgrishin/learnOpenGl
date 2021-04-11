@@ -13,6 +13,8 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
     // GLfloat interval; 
     GLfloat scaleX, scaleY, length;
     // GLuint k = 0;
+    srand(static_cast<unsigned int>(time(0)));
+    rand();
     for (GLfloat i = position.x; i < width; i += offset)
     {
         // std::cout << i <<std::endl;

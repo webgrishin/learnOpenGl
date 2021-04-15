@@ -2,7 +2,6 @@
 
 BrushGenerator::BrushGenerator(RenderEngine::ShaderProgram &shader, vec2 position, GLfloat length, GLfloat scaleX, GLfloat scaleY, GLint inversion): shader(shader)
 {
-    std::cout <<"constructor" << std::endl;
     this->init(position, length, scaleX, scaleY, inversion);
 }
 
@@ -91,7 +90,7 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
 {
     this->life = 1.0f;
 
-    GLfloat absoluteHeightPx = 800.0f;//высота окна в пикселях
+    GLfloat absoluteHeightPx = 600.0f;//высота окна в пикселях
     GLfloat relativeHeightPart = 2.0f;//Высота окна в частях
     GLfloat x = position.x;//координаты начала графика
     GLfloat y = position.y;
@@ -104,7 +103,7 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
         this->interval = 0.002f; //Временная задержка(Скорость пульсации)
     }
     else{
-        offset = 1.0f;
+        offset = 5.0f;
         // offset = 10.0f - ((scale - 1) * 10.0f/4.0f);
         this->interval = 0.001f; //Временная задержка(Скорость пульсации)
     }
@@ -114,18 +113,21 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
     this->tick = this->life / period;
 
     GLfloat realLength = length / onePxPart;
-    vec4 bC = vec4(1.0f, 1.0f, 0.0f, 1.0f);//цвет начала графика
+    vec4 bC = vec4(1.0f, 1.0f, 15.0f/255.0f, 1.0f);//цвет начала графика
     vec4 eC = vec4(1.0f, 0.0f, 0.0f, 1.0f);// цвет конца графика
+    // vec4 bC = vec4(1.0f, 1.0f, 0.0f, 1.0f);//цвет начала графика
+    // vec4 eC = vec4(1.0f, 0.0f, 0.0f, 1.0f);// цвет конца графика
     vec4 dC = (eC - bC) / realLength;//шаг смещения цвета
     GLfloat dA = 1.0f / realLength; //Снижение празрачности на 1 px
     onePxPart *= offset;
     dC *= offset;
     dA *= offset;
     /* 
-    1.Поправить ГСПЧ
+    6.Режимы смешивания
+    2.Распределение длины по графику
+
     3.Добавить белый цвет в корне
         3.1. Научиться делать градиент с занными пропорциями
-    6.Режимы смешивания
 
     4.Уменьшение диаметра.
         4.1.EBO
@@ -135,6 +137,7 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
 
     7.ПоЭксперементировать с ускорением, а не временем
     7.1. Если с ускорением не получится, тогда отвязаться от жизни(Life)
+
     2.У каждого луча должна быть своя пульсация. убрать синхронность
 
      */
@@ -144,10 +147,10 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
     Particle p;
     GLfloat k;
     k = 0.0f;
-    {
-        k = length / 2.0f;
+/*     {
+        k = length / 5.0f;
         bC += (k / onePxPart * dC);
-    }
+    } */
     GLfloat rX = 0.0f;
 
     // std::cout << "init: " << k <<std::endl;
@@ -161,10 +164,12 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
         bC.a = 0.0f;
         // bC.a = p.A;
         y = y + onePxPart;
-        rX = x + sin(i * scaleX) * exp(-i * 0.5f) * scaleY;
+        rX = x + sin(i * scaleX) * exp(-i) * scaleY;
+        // rX = x + sin(i * scaleX) * exp(-i * 0.5f) * scaleY;
         // std::cout << "sin: " << rX << " ";
 
-        // x = sin(i * scaleX) * scaleY;
+        // rX = x + sin(i * scaleX) * scaleY;
+        // rX = x;
 
         p.Color = bC;
         p.Position = vec2(rX, y);
@@ -173,9 +178,10 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
     }
     // std::cout << std::endl;
     this->amount = this->particles.size();
-    std::cout << this->amount << " " << this->tick << " " << this->interval << " " << this->counter << std::endl;
+    // std::cout << "constructor" << std::endl;
+    // std::cout << this->amount << " " << this->tick << " " << this->interval << " " << this->counter << std::endl;
 
-    this->drawCircle(0.0f, 0.0f, 0.0f, 0.05f, 12);
+    this->drawCircle(0.0f, 0.0f, 0.0f, 0.09f, 12);
 }
 
 void BrushGenerator::drawCircle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 0.0f, GLfloat radius = 0.1f, GLuint numberOfSides = 6)
@@ -193,7 +199,7 @@ void BrushGenerator::drawCircle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 
     {
         allCircleVertices.push_back(x + (radius * cos(i * twicePi / numberOfSides)));
         allCircleVertices.push_back(y + (radius * sin(i * twicePi / numberOfSides)));
-        allCircleVertices.push_back(0.0f); //Прозрачность контура круга
+        allCircleVertices.push_back(0.1f); //Прозрачность контура круга
     }
 
     /* float vertices[] = { 

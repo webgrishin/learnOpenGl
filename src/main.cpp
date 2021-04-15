@@ -142,7 +142,7 @@ int main(void)
 	//режим отсечения граней
 	// glEnable(GL_CULL_FACE);
 	// ParticleGenerator particleGen;
-	Fire fire(vec2(-0.5f, -1.0f), 0.3f, WINDOW_WIDTH, WINDOW_HEIGHT);
+	Fire fire(vec2(-1.0f, -1.0f), 2.0f, WINDOW_WIDTH, WINDOW_HEIGHT);
 	
 	glEnable(GL_BLEND);
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

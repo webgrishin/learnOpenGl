@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <time.h>
+#include <math.h>
 
 #include "Brush.h"
 #include "ShaderProgram.h"

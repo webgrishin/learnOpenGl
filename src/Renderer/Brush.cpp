@@ -123,11 +123,7 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
     dC *= offset;
     dA *= offset;
     /* 
-    6.Режимы смешивания
-    2.Распределение длины по графику
-
-    3.Добавить белый цвет в корне
-        3.1. Научиться делать градиент с занными пропорциями
+    3.1. Научиться делать градиент с занными пропорциями
 
     4.Уменьшение диаметра.
         4.1.EBO
@@ -181,7 +177,7 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
     // std::cout << "constructor" << std::endl;
     // std::cout << this->amount << " " << this->tick << " " << this->interval << " " << this->counter << std::endl;
 
-    this->drawCircle(0.0f, 0.0f, 0.0f, 0.09f, 12);
+    this->drawCircle(0.0f, 0.0f, 0.0f, 0.08f, 12);
 }
 
 void BrushGenerator::drawCircle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 0.0f, GLfloat radius = 0.1f, GLuint numberOfSides = 6)

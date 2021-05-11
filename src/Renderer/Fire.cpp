@@ -12,9 +12,9 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
     srand(static_cast<unsigned int>(time(0)));
     rand();
     GLfloat m, n, k, l, step, x, nx;
-    GLfloat const c = 100.0f; //100 язычков пламени
+    GLfloat const c = 200.0f; //100 язычков пламени
 
-    k = 3.0f;
+    k = 2.0f;
     m = M_PI/(2*k);
     n = -m;
     l = m*2;
@@ -33,7 +33,6 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
     kl = width * scaleY;
     i = 0;
     y0 = 0;
-    // GLfloat i=position.x;
     printf("n: %f, l: %f, step: %f; offset:%f\n", n, l, step, offset);
 
     nx= n;
@@ -63,7 +62,7 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
             inversion = getRandomNumber(0, 1);
             inversion = inversion == 0 ? -1 : 1;
             // interval = getRandomNumber(10, 20) / 1000.0f; //0.02f;
-            scaleX = getRandomNumber(10, 50) / 10.0f;
+            scaleX = getRandomNumber(10, 90) / 10.0f;
             // scaleY = 1.0f;
             scaleY = getRandomNumber(5, 30) / 100.0f;
             BrushGenerator brush = BrushGenerator(this->shader, nextPosition, length, scaleX, scaleY, inversion);
@@ -71,8 +70,9 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
         }
     }
 
-    return;
+ /*    return;
 
+    i=position.x;
     for (GLfloat x = n+step; x < m; x += step){
         y = cos(x*k);
         // y = abs(x*k)*-1.0f+1.0f;
@@ -80,17 +80,17 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
         length = getRandomNumber((int)(0.6 * yMax * 1000.0f), (int)(yMax * 1000.0f)) / 1000.0f;
         // length = yMax;
 
-        // i += offset;
-        // nextPosition.x = i;
-        if (length > 0.4f)
+        i += offset;
+        nextPosition.x = i;
+        if (length > 0.9f)
         {
-            {
+     //        {
                 dy = y - y0;
                 y0 = y;
                 position.x += abs(dy)/2.0f * width;
                 nextPosition.x = position.x;
-            }
-            printf("i:%i; y: %f; yMax: %f; x:%f; ody:%f; dx:%f; xn:%f; l: %f\n", i++, y, yMax, nextPosition.x, dy, dy*width, position.x, length);
+       //     }
+            // printf("i:%i; y: %f; yMax: %f; x:%f; ody:%f; dx:%f; xn:%f; l: %f\n", i++, y, yMax, nextPosition.x, dy, dy*width, position.x, length);
             inversion = getRandomNumber(0, 1);
             inversion = inversion == 0 ? -1 : 1;
             // interval = getRandomNumber(10, 20) / 1000.0f; //0.02f;
@@ -100,10 +100,10 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
             BrushGenerator brush = BrushGenerator(this->shader, nextPosition, length, scaleX, scaleY, inversion);
             this->brushes.push_back(brush);
         }
-    }
+    }*/
     // std::cout <<"ee " << this->brushes.size() << std::endl;
     // std::cout <<"ee " <<k << " "<< offset<<" " << this->brushes.size() << std::endl;
-}
+} 
 
 // Рендеринг всех частиц
 void Fire::Draw(mat4 &projection, mat4 &view)

@@ -67,6 +67,7 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
             scaleY = getRandomNumber(5, 30) / 100.0f;
             BrushGenerator brush = BrushGenerator(this->shader, nextPosition, length, scaleX, scaleY, inversion);
             this->brushes.push_back(brush);
+            // return;
         }
     }
 

@@ -29,7 +29,8 @@ struct Particle {
     Particle(vec2 pos = vec2(0.0f), vec2 vel = vec2(0.0f), vec4 color = vec4(0.0f), GLfloat life = 0.0f, GLboolean isNew = false) : Position(pos), Color(color), Life(life), isNew(isNew) { };
 
     GLboolean isAlive(){
-        return this->isNew && this->Life > 0.5f;
+        return this->isNew && this->Color.a > 0.001f;
+        // return this->isNew && this->Life > 0.5f;
 /*         return this->isNew && this->Life > (this->A-0.3f);
         if(this->isNew){
             if (this->A > 0.8f)
@@ -60,6 +61,7 @@ private:
     GLuint amount = 0;
     GLfloat life, tick, interval, counter;
     GLuint head = 0;
+    GLdouble lastTime = 0.0;
 
     // Рендеринг
     RenderEngine::ShaderProgram &shader;
@@ -70,9 +72,11 @@ private:
 	
     // Возрождение частиц
     void respawnParticle(Particle& particle);
+    void newParticle();
 
     GLuint nPointsOfCircle;
     void drawCircle(GLfloat x, GLfloat y, GLfloat, GLfloat radius, GLuint numberOfSides);
+    GLfloat randFloat();
 };
 
 #endif

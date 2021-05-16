@@ -1,4 +1,5 @@
 #include "Brush.h"
+#include <GLFW/glfw3.h>
 
 BrushGenerator::BrushGenerator(RenderEngine::ShaderProgram &shader, vec2 position, GLfloat length, GLfloat scaleX, GLfloat scaleY, GLint inversion): shader(shader)
 {
@@ -9,28 +10,57 @@ void BrushGenerator::Update()
 {
     // std::cout << this->counter<< " " <<this->tick << std::endl;
     // std::cout << this->amount << " " << this->tick<<" "<< this->interval << " "<<this->counter << std::endl;
+    double now = glfwGetTime();
+    double age = now - this->lastTime;
+    this->counter = age;
+    // printf("now:%f; age: %f; lastTime: %f;\n", now, age, lastTime);
+
+            // accumulator += delta;
     if (this->counter > this->interval)
     {
-        if (this->head >= this->amount)
+        this->newParticle();
+/*         if (this->head >= this->amount)
             this->head = 0;
         // std::cout << this->head << std::endl;
         this->respawnParticle(this->particles[this->head]);
-        this->head++;
+        this->head++; */
         this->counter = 0.0f;
+        this->lastTime = now;
     }
 
+    GLfloat Transp;
+    // Transp = 1.0 - age / 0.5;
+    Transp =  1.0 - age / (this->interval*45.0f);
     for (GLuint i = 0; i < this->amount; i++)
     {
         Particle &p = this->particles[i];
         if (p.isAlive())
         {
-            p.Life -= this->tick;
-            // p.Color.a = p.Life;
-            p.Color.a -= this->tick;
+            // p.Life -= Transp;
+            // p.Color.a -= Transp;
+            // p.Life *= Transp;
+            // printf("a: %f;\n",p.Color.a);
+            p.Color.a *= Transp;
+            // if (!p.isAlive())
+                // this->newParticle();
+            // printf("i:%i; Transp:%f; Life: %f; a: %f; A:%f\n", i, Transp, p.Life, p.Color.a, p.A);
+
+            // p.Life -= this->tick;
+            //// p.Color.a = p.Life;
+            // p.Color.a -= this->tick;
         }
     }
 
-    this->counter += this->tick;
+    // this->counter += this->tick;
+}
+
+void BrushGenerator::newParticle()
+{
+    if (this->head >= this->amount)
+        this->head = 0;
+    // std::cout << this->head << std::endl;
+    this->respawnParticle(this->particles[this->head]);
+    this->head++;
 }
 
 void BrushGenerator::respawnParticle(Particle &particle)
@@ -64,20 +94,20 @@ void BrushGenerator::Draw(mat4 &projection, mat4 &view)
     {
         // if (particle.Life > 0.0f)
         // {
-            // this->shader.SetVector2f("offset", particle.Position);
-            // this->shader.SetVector4f("color", particle.Color);
-            // glBindVertexArray(this->VAO);
-            // glDrawArrays(GL_TRIANGLES, 0, 6);
-            // glBindVertexArray(0);
+        // this->shader.SetVector2f("offset", particle.Position);
+        // this->shader.SetVector4f("color", particle.Color);
+        // glBindVertexArray(this->VAO);
+        // glDrawArrays(GL_TRIANGLES, 0, 6);
+        // glBindVertexArray(0);
 
-            // this->shader.setVec4("fragColor", particle.Color);
-            this->shader.setVec4("fragVex", this->particles[i].Color);
-            model = translate(mat4(1.0f), vec3(this->particles[i].Position, 0.0f));
-            shader.setMat4("model", model);
-            // glDrawArrays(GL_POINTS, 0, 1);
-            // glDrawArrays(GL_POINTS, 0, this->nPointsOfCircle);
-            glDrawArrays(GL_TRIANGLE_FAN, 0, this->nPointsOfCircle);
-            // glDrawArrays(GL_TRIANGLES, 0, 3);
+        // this->shader.setVec4("fragColor", particle.Color);
+        this->shader.setVec4("fragVex", this->particles[i].Color);
+        model = translate(mat4(1.0f), vec3(this->particles[i].Position, 0.0f));
+        shader.setMat4("model", model);
+        // glDrawArrays(GL_POINTS, 0, 1);
+        // glDrawArrays(GL_POINTS, 0, this->nPointsOfCircle);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, this->nPointsOfCircle);
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
         // }
     }
     glBindVertexArray(0);
@@ -90,35 +120,40 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
 {
     this->life = 1.0f;
 
-    GLfloat absoluteHeightPx = 600.0f;//высота окна в пикселях
-    GLfloat relativeHeightPart = 2.0f;//Высота окна в частях
-    GLfloat x = position.x;//координаты начала графика
+    GLfloat absoluteHeightPx = 600.0f; //высота окна в пикселях
+    GLfloat relativeHeightPart = 2.0f; //Высота окна в частях
+    GLfloat x = position.x;            //координаты начала графика
     GLfloat y = position.y;
     GLfloat onePxPart = relativeHeightPart / absoluteHeightPx; //шаг смещения (количество частей в одном пикселе)
     GLfloat scale = scaleY * scaleX;
-    GLfloat offset;//разряжённость (сколько точек в графике)
-    if (scale < 1.0f){
+    GLfloat offset; //разряжённость (сколько точек в графике)
+    if (scale < 1.0f)
+    {
         // offset = 15.0f;
         offset = 5.0f;
-        this->interval = 0.002f; //Временная задержка(Скорость пульсации)
+        this->interval = 0.012f; //Временная задержка(Скорость пульсации)
+        // this->interval = 0.002f; //Временная задержка(Скорость пульсации)
     }
-    else{
+    else
+    {
         offset = 5.0f;
         // offset = 10.0f - ((scale - 1) * 10.0f/4.0f);
-        this->interval = 0.001f; //Временная задержка(Скорость пульсации)
+        this->interval = 0.011f; //Временная задержка(Скорость пульсации)
+        // this->interval = 0.001f; //Временная задержка(Скорость пульсации)
     }
+    // interval = glm::mix(0.01f, 0.05f, randFloat());
 
     this->counter = 0.0f;
-    GLfloat period = this->interval * 100000.0f;
-    this->tick = this->life / period;
+    // GLfloat period = this->interval * 100000.0f;
+    // this->tick = this->life / period;
 
     GLfloat realLength = length / onePxPart;
-    vec4 bC = vec4(1.0f, 1.0f, 15.0f/255.0f, 1.0f);//цвет начала графика
-    vec4 eC = vec4(1.0f, 0.0f, 0.0f, 1.0f);// цвет конца графика
+    vec4 bC = vec4(1.0f, 1.0f, 15.0f / 255.0f, 1.0f); //цвет начала графика
+    vec4 eC = vec4(1.0f, 0.0f, 0.0f, 1.0f);           // цвет конца графика
     // vec4 bC = vec4(1.0f, 1.0f, 0.0f, 1.0f);//цвет начала графика
     // vec4 eC = vec4(1.0f, 0.0f, 0.0f, 1.0f);// цвет конца графика
-    vec4 dC = (eC - bC) / realLength;//шаг смещения цвета
-    GLfloat dA = 1.0f / realLength; //Снижение празрачности на 1 px
+    vec4 dC = (eC - bC) / realLength; //шаг смещения цвета
+    GLfloat dA = 1.0f / realLength;   //Снижение празрачности на 1 px
     onePxPart *= offset;
     dC *= offset;
     dA *= offset;
@@ -138,12 +173,12 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
 
      */
 
-    GLfloat maxA = length;// * 2.0f/3.0f;
+    GLfloat maxA = length; // * 2.0f/3.0f;
     scaleY *= inversion;
     Particle p;
     GLfloat k;
     k = 0.0f;
-/*     {
+    /*     {
         k = length / 5.0f;
         bC += (k / onePxPart * dC);
     } */
@@ -218,4 +253,10 @@ void BrushGenerator::drawCircle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
     glBindVertexArray(0);
+}
+GLfloat BrushGenerator::randFloat()
+{
+    static const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
+    // Равномерно распределяем рандомное число в нашем диапазоне
+    return static_cast<int>(rand() * fraction);
 }

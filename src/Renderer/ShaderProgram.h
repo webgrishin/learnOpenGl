@@ -22,24 +22,27 @@ namespace RenderEngine
 
         ShaderProgram(){}
         // конструктор генерирует шейдер на лету
-        ShaderProgram(const std::string &vertexPath, const std::string &fragmentPath){
-            this->create(vertexPath, fragmentPath);
+        ShaderProgram(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr){
+            this->create(vertexPath, fragmentPath, geometryPath);
         }
-        void create(const std::string &vertexPath, const std::string &fragmentPath)
+        void create(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr)
         {
             // 1. получение исходного кода вершинного/фрагментного шейдера из переменной filePath
             std::string vertexCode;
             std::string fragmentCode;
+            std::string geometryCode;
             std::ifstream vShaderFile;
             std::ifstream fShaderFile;
+            std::ifstream gShaderFile;
             // убеждаемся, что объекты ifstream могут выбросить исключение:
             vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             try
             {
                 // открываем файлы
-                vShaderFile.open(vertexPath.c_str());
-                fShaderFile.open(fragmentPath.c_str());
+                vShaderFile.open(vertexPath);
+                fShaderFile.open(fragmentPath);
                 std::stringstream vShaderStream, fShaderStream;
                 // читаем содержимое файловых буферов
                 vShaderStream << vShaderFile.rdbuf();
@@ -50,6 +53,16 @@ namespace RenderEngine
                 // конвертируем в строковую переменную данные из потока
                 vertexCode = vShaderStream.str();
                 fragmentCode = fShaderStream.str();
+
+                // Если дан путь к геометрическому шейдеру, то загружаем и его
+                if (geometryPath != nullptr)
+                {
+                    gShaderFile.open(geometryPath);
+                    std::stringstream gShaderStream;
+                    gShaderStream << gShaderFile.rdbuf();
+                    gShaderFile.close();
+                    geometryCode = gShaderStream.str();
+                }
             }
             catch (std::ifstream::failure &e)
             {
@@ -58,7 +71,7 @@ namespace RenderEngine
                 return;
             }
             // 2. компилируем шейдеры
-            GLuint idVertex, idFragment;
+            GLuint idVertex, idFragment, idGeometry;
             // vertex shader
             idVertex = createShader(GL_VERTEX_SHADER, vertexCode.c_str());
             if (!m_isCompiled)
@@ -75,15 +88,31 @@ namespace RenderEngine
                 return;
             }
 
+            // Если был дан геометрический шейдер, то компилируем его
+            if (geometryPath != nullptr)
+            {
+                idGeometry = createShader(GL_GEOMETRY_SHADER, geometryCode.c_str());
+                if (!m_isCompiled)
+                {
+                    glDeleteShader(idGeometry);
+                    return;
+                }
+            }
+
             // Шейдерная программа
             ID = glCreateProgram();
             glAttachShader(ID, idVertex);
             glAttachShader(ID, idFragment);
+            if (geometryPath != nullptr)
+                glAttachShader(ID, idGeometry);
+            
             glLinkProgram(ID);
             checkCompileErrors(ID, "PROGRAM");
             // После того, как мы связали шейдеры с нашей программой, удаляем их, т.к. они больше не нужны
             glDeleteShader(idVertex);
             glDeleteShader(idFragment);
+            if (geometryPath != nullptr)
+                glDeleteShader(idGeometry);
         }
 
         ~ShaderProgram()
@@ -151,7 +180,7 @@ namespace RenderEngine
             GLuint idShader = glCreateShader(shaderType);
             glShaderSource(idShader, 1, &sourceCode, nullptr);
             glCompileShader(idShader);
-            checkCompileErrors(idShader, shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT");
+            checkCompileErrors(idShader, shaderType == GL_VERTEX_SHADER ? "VERTEX" : shaderType == GL_FRAGMENT_SHADER ? "FRAGMENT" : "GEOMETRY");
 
             return idShader;
         }

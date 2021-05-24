@@ -147,22 +147,12 @@ int main(void)
 	
 	glEnable(GL_BLEND);
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     // glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-	GLuint src_func[] = {
- GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE, GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_SRC1_ALPHA,  GL_ONE_MINUS_SRC1_ALPHA
- 	};
-	GLuint dst_func[] = {
- GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE, GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_SRC1_ALPHA,  GL_ONE_MINUS_SRC1_ALPHA
- 	};
-	 SRC = 6; DST = 1;
-	// printf("%i, %i\n", GL_SRC_ALPHA, GL_ONE);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	// glBlendEquation(GL_FUNC_ADD);
-	// glBlendColor(1.0f, 1.0f, 1.0f, 1.0f);
+	// glPointSize(10.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glBlendFunc(src_func[SRC], dst_func[DST]);
 		// логическая часть работы со временем для каждого кадра
 		// --------------------
 		GLfloat currentFrame = glfwGetTime();
@@ -265,31 +255,6 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 		stateLight.onPointsLight = !stateLight.onPointsLight;
 	if (key == GLFW_KEY_F && action == GLFW_PRESS)
 		stateLight.onSpotLight = !stateLight.onSpotLight;
-	if (key == GLFW_KEY_X && action == GLFW_PRESS){
-		if (SRC < 19)
-			SRC++;
-		else
-			SRC = 0;
-	}
-	if (key == GLFW_KEY_Z && action == GLFW_PRESS){
-		if (SRC > 0)
-			SRC--;
-		else
-			SRC = 18;
-
-	}
-	if (key == GLFW_KEY_V && action == GLFW_PRESS){
-		if (DST < 19)
-			DST++;
-		else
-			DST = 0;
-	}
-	if (key == GLFW_KEY_C && action == GLFW_PRESS){
-		if (DST > 0)
-			DST--;
-		else
-			DST = 18;
-	}
 }
 
 // glfw: всякий раз, когда изменяются размеры окна (пользователем или опер. системой), вызывается данная функция

@@ -1,5 +1,6 @@
 #include "Brush.h"
 #include <GLFW/glfw3.h>
+#include "../checkError.h"
 
 BrushGenerator::BrushGenerator(RenderEngine::ShaderProgram &shader, vec2 position, GLfloat length, GLfloat scaleX, GLfloat scaleY, GLint inversion): shader(shader)
 {
@@ -8,6 +9,7 @@ BrushGenerator::BrushGenerator(RenderEngine::ShaderProgram &shader, vec2 positio
 
 void BrushGenerator::Update()
 {
+    return;
     // std::cout << this->counter<< " " <<this->tick << std::endl;
     // std::cout << this->amount << " " << this->tick<<" "<< this->interval << " "<<this->counter << std::endl;
     double now = glfwGetTime();
@@ -19,8 +21,9 @@ void BrushGenerator::Update()
     if (this->counter > this->interval)
     {
         this->newParticle();
-/*         if (this->head >= this->amount)
+/*      if (this->head >= this->amount)
             this->head = 0;
+        
         // std::cout << this->head << std::endl;
         this->respawnParticle(this->particles[this->head]);
         this->head++; */
@@ -87,8 +90,11 @@ void BrushGenerator::Draw(mat4 &projection, mat4 &view)
     this->shader.use();
     this->shader.setMat4("projection", projection);
     this->shader.setMat4("view", view);
+    shader.setMat4("model", mat4(1.0f));
+    shader.setFloat("Time", glfwGetTime());
+    shader.setFloat("ParticleLifetime", this->interval*45.0f);
     glBindVertexArray(this->VAO);
-    mat4 model;
+/*     mat4 model;
     for (GLuint i = 0; i < this->amount; i++)
     // for (Particle particle : this->particles)
     {
@@ -109,8 +115,12 @@ void BrushGenerator::Draw(mat4 &projection, mat4 &view)
         glDrawArrays(GL_TRIANGLE_FAN, 0, this->nPointsOfCircle);
         // glDrawArrays(GL_TRIANGLES, 0, 3);
         // }
-    }
-    glBindVertexArray(0);
+    } */
+    // glDrawArrays(GL_POINTS, 0, 3);
+    // glCheckError();
+    // glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_POINTS, 0, this->amount);
+    // glBindVertexArray(0);
 
     // Не забываем сбросить режим смешивания к изначальным настройкам
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -141,8 +151,13 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
         this->interval = 0.011f; //Временная задержка(Скорость пульсации)
         // this->interval = 0.001f; //Временная задержка(Скорость пульсации)
     }
+    // offset = 1.0f;
     // interval = glm::mix(0.01f, 0.05f, randFloat());
 
+    // srand(static_cast<unsigned int>(time(0)));
+    // rand();
+    offset = glm::mix(1.0f, 5.0f, randFloat());
+    // printf("offset:%f\n", offset);
     this->counter = 0.0f;
     // GLfloat period = this->interval * 100000.0f;
     // this->tick = this->life / period;
@@ -209,10 +224,73 @@ void BrushGenerator::init(vec2 position = vec2(0.0f, -1.0f), GLfloat length = 1.
     }
     // std::cout << std::endl;
     this->amount = this->particles.size();
+    // this->drawCircle(0.0f, 0.0f, 0.0f, 0.08f, 12);
+    // return;
+    GLuint size_pos = this->amount * 2;
+    GLuint size_color = this->amount * 4;
+    GLfloat *pos = new GLfloat[size_pos];
+    GLfloat *color = new GLfloat[size_color];
+    GLfloat *time = new GLfloat[this->amount];
+    GLfloat *initPos = new GLfloat[this->amount];
+    GLfloat t = 0.0f;
+    for (GLuint i = 0; i < this->amount; i++)
+    {
+        initPos[i] = this->particles[0].Position.x;
+        t+=this->interval;
+        time[i] = t;
+        pos[2*i] = this->particles[i].Position.x;
+        pos[2*i+1] = this->particles[i].Position.y;
+        color[4*i] = this->particles[i].Color.r;
+        color[4*i+1] = this->particles[i].Color.g;
+        color[4*i+2] = this->particles[i].Color.b;
+        color[4*i+3] = this->particles[i].Color.a;
+    }
+    // printf("amount:%i\n", amount);
+    // for (GLuint i = 0; i < this->amount; i++)
+    // {
+        // printf("+i:%i (%f, %f); n:%i (%f, %f);\n", 0, pos[0], pos[1], amount, pos[size_pos-2], pos[size_pos-1]);
+        // printf("-i:%i (%f, %f); n:%i (%f, %f);\n", 0, particles[0].Position.x, particles[0].Position.y, amount, particles[amount-1].Position.x, particles[amount-1].Position.y);
+    // }
+
     // std::cout << "constructor" << std::endl;
     // std::cout << this->amount << " " << this->tick << " " << this->interval << " " << this->counter << std::endl;
 
-    this->drawCircle(0.0f, 0.0f, 0.0f, 0.08f, 12);
+    // this->drawCircle(0.0f, 0.0f, 0.0f, 0.08f, 12);
+
+    GLuint VBO_POS, VBO_COLOR, VBO_TIME, VBO_INITPOS;
+    glGenVertexArrays(1, &this->VAO);
+    glGenBuffers(1, &VBO_POS);
+    glGenBuffers(1, &VBO_COLOR);
+    glGenBuffers(1, &VBO_TIME);
+    glGenBuffers(1, &VBO_INITPOS);
+
+    glBindVertexArray(this->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_POS);
+    glBufferData(GL_ARRAY_BUFFER, size_pos * sizeof(GLfloat), pos, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_COLOR);
+    glBufferData(GL_ARRAY_BUFFER, size_color * sizeof(GLfloat), color, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_TIME);
+    glBufferData(GL_ARRAY_BUFFER, this->amount * sizeof(GLfloat), time, GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_INITPOS);
+    glBufferData(GL_ARRAY_BUFFER, this->amount * sizeof(GLfloat), initPos, GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(3);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    delete [] pos;
+    delete [] color;
+    delete [] time;
 }
 
 void BrushGenerator::drawCircle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 0.0f, GLfloat radius = 0.1f, GLuint numberOfSides = 6)
@@ -225,11 +303,15 @@ void BrushGenerator::drawCircle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 
     allCircleVertices.push_back(x);
     allCircleVertices.push_back(y);
     allCircleVertices.push_back(1.0f); //Прозрачность центра круга
+    GLfloat rx, ry;
 
     for (int i = 1; i < this->nPointsOfCircle; i++)
     {
-        allCircleVertices.push_back(x + (radius * cos(i * twicePi / numberOfSides)));
-        allCircleVertices.push_back(y + (radius * sin(i * twicePi / numberOfSides)));
+        rx = x + (radius * cos(i * twicePi / numberOfSides));
+        ry = y + (radius * sin(i * twicePi / numberOfSides));
+        // printf("i:%i; x:%f; y:%f\n", i, rx, ry);
+        allCircleVertices.push_back(rx);
+        allCircleVertices.push_back(ry);
         allCircleVertices.push_back(0.1f); //Прозрачность контура круга
     }
 
@@ -258,5 +340,5 @@ GLfloat BrushGenerator::randFloat()
 {
     static const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
     // Равномерно распределяем рандомное число в нашем диапазоне
-    return static_cast<int>(rand() * fraction);
+    return static_cast<float>(rand() * fraction);
 }

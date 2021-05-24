@@ -26,6 +26,7 @@ add_executable(${PROJECT_NAME}
         src/assets/shaders/shader.vs
         src/assets/shaders/shader.fs
         src/assets/shaders/point.vs
+        src/assets/shaders/point2.vs
         src/assets/shaders/point.fs
 )
 

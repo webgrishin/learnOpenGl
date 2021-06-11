@@ -13,10 +13,10 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <time.h>
-#include <math.h>
+#define _USE_MATH_DEFINES
 
-#include "Brush.h"
 #include "ShaderProgram.h"
+#include "MCircle.h"
 
 using namespace glm;
 
@@ -28,21 +28,30 @@ public:
     void Draw(mat4 &projection, mat4 &view);
 private:
     RenderEngine::ShaderProgram shader;
-    std::vector<BrushGenerator> brushes;
-    int getRandomNumber(int min, int max);
+    GLint getRandomNumber(int min, int max);
 
-    float timeNow, deltaT;
+    float timeNow, deltaT, particleLifetime;
     void update( float t );
     void render(mat4 &projection, mat4 &view);
     // GLuint VAO;
-    GLuint posBuf[2];
     GLuint VAOparticleArray[2];
-    GLuint feedback[2], initVel, startTime[2];
+    GLuint feedback[2];
     GLuint drawBuf;
     GLuint renderSub, updateSub;
     void initBuffers();
+    GLfloat randFloat();
+    void initFire(vec2 position, GLfloat width);
+    std::vector<vec2> Pos;
+    // std::vector<vec2> initPos;
+    std::vector<GLfloat> LifeTime;
+    std::vector<GLfloat> StartTime;
+    std::vector<GLfloat> ScaleX;
+    std::vector<GLfloat> ScaleY;
+    std::vector<GLfloat> Inversion;
+    // GLuint nPointsOfCircle;
 
     uint nParticles;
+    MCircle circle;
 };
 
 #endif

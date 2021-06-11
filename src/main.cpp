@@ -149,7 +149,7 @@ int main(void)
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     // glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-	// glPointSize(10.0f);
+	glPointSize(5.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{

@@ -12,6 +12,8 @@ add_executable(${PROJECT_NAME}
         src/Renderer/Model.h
         src/Renderer/Brush.h
         src/Renderer/Brush.cpp
+        src/Renderer/MCircle.h
+        src/Renderer/MCircle.cpp
         src/Renderer/Fire.h
         src/Renderer/Fire.cpp
         src/Renderer/StaticModel.h

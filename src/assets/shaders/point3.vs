@@ -5,17 +5,20 @@ subroutine uniform RenderPassType RenderPass;
 
 layout (location = 0) in vec2 aPos;
 layout (location = 1) in float aStartTime;
-//layout (location = 2) in vec2 aIndexPosition;
+layout (location = 2) in vec2 aInitPos;
+layout (location = 3) in float aParticleLifetime;
+layout (location = 4) in float aScaleX;
+layout (location = 5) in float aScaleY;
+layout (location = 6) in float aInversion;
 
 layout( xfb_buffer = 0, xfb_offset=0 ) out vec2 Position;   // To transform feedback
 layout( xfb_buffer = 1, xfb_offset=0 ) out float StartTime; // To transform feedback
-//layout( xfb_buffer = 2, xfb_offset=0 ) out uint IndexPosition; // To transform feedback
+//layout( xfb_buffer = 2, xfb_offset=0 ) out vec2 InitPos; // To transform feedback
 
-uniform float scaleX;
-uniform float scaleY;
 uniform float Time;
 uniform float dT;     // Elapsed time between frames
-uniform float ParticleLifetime;
+uniform vec4 bC;
+uniform vec4 dC;
 
 uniform mat4 MVP;
 
@@ -27,21 +30,23 @@ void update() {
     // Update attr for next frame
     Position = aPos;
     StartTime = aStartTime;
-	//IndexPosition = aIndexPosition;
+	//InitPos = aInitPos;
 
     if( Time >= StartTime ) {
 
         float age = Time - StartTime;
 
-        if( age > ParticleLifetime ) {
+        if( age > aParticleLifetime ) {
             // The particle is past it's lifetime, recycle.
-            Position = vec2(0.0);
+            Position = aInitPos;
+            //Position = vec2(0.5, gl_VertexID/10.0);
             StartTime = Time;
-        } else {
+        } else{
+        //} else if (age > aParticleLifetime/5.0){
             // The particle is alive, update.
 			Position.y = Position.y + dT;
-			//Position.x = Position.x + dT;
-			Position.x = Position.x + sin(age * scaleX) * exp(-age*2) * scaleY;
+			Position.x = Position.x + sin(age * aScaleX) * exp(-age) * aScaleY * aInversion;
+            //Почему не удаётся привести int to float?
         }
     }
 }
@@ -49,8 +54,13 @@ void update() {
 subroutine (RenderPassType)
 void render() {
     float age = Time - aStartTime;
-	fragColor = vec4(1.0, 1.0, 0.0, 1.0);
-	fragColor.a = 1.0 - age / ParticleLifetime;
+	//fragColor = vec4(aPos/3, 0.0, 1.0);
+	//fragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    //if (aPos.y==0.0)
+        //fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    //fragColor = vec4(aInversion);
+    fragColor = bC + dC/aParticleLifetime * age;
+	fragColor.a = 1.0 - age / aParticleLifetime;
 	gl_Position = MVP * vec4(aPos, 0.0, 1.0);
 }
 

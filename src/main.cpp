@@ -32,7 +32,7 @@ const GLuint WINDOW_WIDTH = 800;
 const GLuint WINDOW_HEIGHT = 600;
 
 // камера
-RenderEngine::Camera camera;
+RenderEngine::Camera camera(vec3(0.0f, 0.0f, 2.5f));
 GLfloat lastX = WINDOW_WIDTH / 2.0f;
 GLfloat lastY = WINDOW_HEIGHT / 2.0f;
 bool firstMouse = true;

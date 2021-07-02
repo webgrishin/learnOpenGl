@@ -1,11 +1,12 @@
 #include "Fire.h"
 void Fire::initBuffers()
 {
-    GLuint aPosBuf[2], aStartTime[2], aInitPos, aParticleLifetime, aScaleX, aScaleY, aInversion;
+    GLuint aVerteciesCircle, aPosBuf[2], aStartTime[2], aInitPos, aParticleLifetime, aScaleX, aScaleY, aInversion;
     this->nParticles = Pos.size();
     // Create VAO for each set of buffers
     glGenVertexArrays(2, VAOparticleArray);
     // Generate the buffers
+    glGenBuffers(1, &aVerteciesCircle);
     glGenBuffers(2, aPosBuf);    // position buffers
     glGenBuffers(2, aStartTime); // Start time buffers
     glGenBuffers(1, &aInitPos);
@@ -23,10 +24,6 @@ void Fire::initBuffers()
 
     glBindBuffer(GL_ARRAY_BUFFER, aInitPos);
     glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
-    // glBindBuffer(GL_ARRAY_BUFFER, initPos[0]);
-    // glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_COPY);
-    // glBindBuffer(GL_ARRAY_BUFFER, initPos[1]);
-    // glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_COPY);
     size = nParticles * sizeof(GLfloat);
     glBindBuffer(GL_ARRAY_BUFFER, aStartTime[0]);
     glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_COPY);
@@ -40,6 +37,9 @@ void Fire::initBuffers()
     glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, aInversion);
     glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, aVerteciesCircle);
+    glBufferData(GL_ARRAY_BUFFER, circle.getVerteciesCurcle().size() * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
     /*
     1.Исправить баг при запуске
@@ -82,11 +82,11 @@ void Fire::initBuffers()
 
     // Set up particle array 0
     glBindVertexArray(VAOparticleArray[0]);
+
     glBindBuffer(GL_ARRAY_BUFFER, aPosBuf[0]);
     glBufferData(GL_ARRAY_BUFFER, size*2, &Pos[0], GL_DYNAMIC_COPY);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
-
 
     glBindBuffer(GL_ARRAY_BUFFER, aStartTime[0]);
     glBufferData(GL_ARRAY_BUFFER, size, &StartTime[0], GL_DYNAMIC_COPY);
@@ -117,6 +117,12 @@ void Fire::initBuffers()
     glBufferData(GL_ARRAY_BUFFER, size, &Inversion[0], GL_STATIC_DRAW);
     glVertexAttribPointer(6, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(6);
+
+    glBindBuffer(GL_ARRAY_BUFFER, aVerteciesCircle);
+    glBufferData(GL_ARRAY_BUFFER, circle.getVerteciesCurcle().size() * sizeof(GLfloat), &circle.getVerteciesCurcle()[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(7);
+
     // glBindBuffer(GL_ARRAY_BUFFER, initPos);
     // glBufferData(GL_ARRAY_BUFFER, nParticles * 2* sizeof(GLfloat), pos, GL_STATIC_DRAW);
     // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -133,31 +139,29 @@ void Fire::initBuffers()
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, aInitPos);
-    // glBufferData(GL_ARRAY_BUFFER, size*2, &Pos[0], GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(2);
     
     glBindBuffer(GL_ARRAY_BUFFER, aParticleLifetime);
-    // glBufferData(GL_ARRAY_BUFFER, size, &LifeTime[0], GL_STATIC_DRAW);
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(3);
 
     glBindBuffer(GL_ARRAY_BUFFER, aScaleX);
-    // glBufferData(GL_ARRAY_BUFFER, size, &ScaleX[0], GL_STATIC_DRAW);
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(4);
 
     glBindBuffer(GL_ARRAY_BUFFER, aScaleY);
-    // glBufferData(GL_ARRAY_BUFFER, size, &ScaleY[0], GL_STATIC_DRAW);
     glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(5);
 
     glBindBuffer(GL_ARRAY_BUFFER, aInversion);
     glVertexAttribPointer(6, 1, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(6);
-    // glBindBuffer(GL_ARRAY_BUFFER, initPos[1]);
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-    // glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, aVerteciesCircle);
+    glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(7);
+
 
     glBindVertexArray(0);
 
@@ -208,31 +212,42 @@ void Fire::initBuffers()
     this->renderSub = glGetSubroutineIndex(this->shader.ID, GL_VERTEX_SHADER, "render");
     this->updateSub = glGetSubroutineIndex(this->shader.ID, GL_VERTEX_SHADER, "update");
 }
+GLfloat Fire::_grapfXQR(float a, float x, float b){
+    return a * x*x + b;
+}
 void Fire::initFire(vec2 position, GLfloat width){
 
-    GLuint const c = 500; //количество язычков пламени
+    GLuint const c = 200; //количество язычков пламени
 
-    GLfloat k = 1.0f;
+    GLfloat const k = 1.0f; //высота пламени, профиль пламени
     GLfloat const PI = glm::pi<float>();
 
-    GLfloat m = PI / (2.0f * k);
-    GLfloat n = -m;
-    GLfloat l = m * 2;
+    // GLfloat const a = -53.0f;
+    // GLfloat const b = 1.0f;
+    // GLfloat const m = sqrt(-b/a);
+    GLfloat const m = PI / (2.0f * k);
+    GLfloat const n = -m;
+    GLfloat const l = m * 2;
 
     GLfloat x, y, y0, dy, nx;
-    GLfloat step = l / c;
+    GLfloat const step = l / c;
     GLfloat *xs = new GLfloat[c];
     GLuint i = 0;
     y0 = 0;
     nx = n;
+
+    // GLfloat const _k = l/(2*b);
+    GLfloat const _k = l/2.0f;
     for (x = n; x < m && i < c; x += step, i++)
     {
         y = cos(x * k);
+        // y = _grapfXQR(a, x, b);
         dy = y - y0;
         y0 = y;
-        xs[i] = nx + (abs(dy) / 2.0f) * l;
+        xs[i] = nx + abs(dy) * _k;
+        // xs[i] = nx + (abs(dy) / 2.0f) * l;
         nx = xs[i];
-        // printf("i: %i, y: %f\n", i, xs[i]);
+        // printf("i: %i, x:%f, y: %f, dy: %f, xs: %f\n", i, x, y, dy, xs[i]);
     }
 
     GLfloat scaleY = 1.0f / l;
@@ -241,69 +256,84 @@ void Fire::initFire(vec2 position, GLfloat width){
     vec2 nextPosition = position;
     GLfloat x0 = xs[0], sumX = 0.0f;
     // GLchar _inversion = 1;
+    GLfloat const centr = c/2.0f;
+    // i = 0;
+    // for (x = n; x < m && i < c; x += step, i++)
     for (i = 0; i < c; i++)
     {
         x = xs[i];
-        y = cos(x * k) * kl;
-        GLfloat length = glm::mix(0.6f * y, y, this->randFloat());
+        y = cos(x * k); //*kl;
+        // y = _grapfXQR(a, x, b);
+        // GLfloat length = y;
+        GLfloat length = glm::mix(y * 0.6f, y, this->randFloat());
+        if (x==0)
+            length = y;
         // printf("i: %i; x: %f; y: %f, l:%f\n", i, x, y, length);
+        //0>=length<=0.63
 
-        GLfloat const _lifeTime = 3.0f; //тоже влияет на высоту пламени
-        GLuint const MaxParticle = 200;
-        particleLifetime = length * _lifeTime;
+        GLfloat const _lifeTime = 2.0f; //тоже влияет на высоту пламени, как бы масштабирование профиля пламени (k)
+        GLuint const MaxParticle = 100;
+        particleLifetime = length * _lifeTime; //Срок жизни частицы в язычке
+        // particleLifetime = _lifeTime; //Срок жизни частицы в язычке
         // nParticles = particleLifetime * MaxParticle / _lifeTime;
-        nParticles = length * MaxParticle;
-        
-        GLfloat period = glm::mix(0.6f, 4.0f, this->randFloat());
-        GLfloat rate = particleLifetime / (nParticles * period);//0.7f
-        /* 
+        nParticles = length * MaxParticle; //длина червячка
+        if (nParticles > 10)
+        {
+            // nParticles = MaxParticle; //Количество частиц в одном язычке пламени
+
+            GLfloat period = glm::mix(0.6f, 4.0f, this->randFloat());
+            GLfloat rate = particleLifetime / (nParticles * period); //0.7f
+            // GLfloat rate = glm::mix(0.01f, 0.09f, this->randFloat()); //Расстояние(отстование,) между точками в чераячке
+            // printf("i:%i; l: %f; n: %i; r: %f\n", i, length, nParticles, rate);
+            // GLfloat rate = particleLifetime / (nParticles);//0.7f
+            /* 
         1.Игры с rate и period:
             1.Сделать период в % соотношении
             2.Сделать rate случайный
             3.Сделать rate случайный для каждой частицы
-        2.Сделать удаление векторов
-        3.Сделать изменение диаметра частиц
-        4.Ввести ветер
         5.сделать ScaleY в зависимости от позиции: чем ближе к краю - тем шире, к центру - уже
-        6.Применить форму для частицы
 
         7.Применить другой алгоритм(старый)
          */
-        // rate = glm::mix(_startTime, _startTime + particleLifetime, this->randFloat());
-        GLfloat const _startTime = 1.0f;
-        // printf("n: %i\n", nParticles);
+            // rate = glm::mix(_startTime, _startTime + particleLifetime, this->randFloat());
+            // GLfloat const _startTime = 0.0f;
+            GLfloat _startTime = glm::mix(1.0f, 2.0f, this->randFloat());
+            // printf("n: %i\n", nParticles);
 
-        sumX += x - x0;
-        x0 = x;
-        nextPosition = position;
-        nextPosition.x += sumX * kx;
-        GLfloat _time = _startTime;
-        GLfloat _scaleX = mix(5.0f, 10.0f, this->randFloat());
-        GLfloat _scaleY = mix(0.0001f, 0.0008f, this->randFloat());
-        // GLfloat _scaleX = 10.0f;
-        // GLfloat _scaleY = 0.0009f;
-        GLint _inversion = getRandomNumber(0, 1);
-        _inversion = _inversion == 0 ? -1 : 1;
-        // _inversion *= -1;
-        for (GLuint j = 0; j < nParticles; j++)
-        {
-            Pos.push_back(nextPosition);
-            LifeTime.push_back(particleLifetime);
-            StartTime.push_back(_time);
-            _time += rate;
-            ScaleX.push_back(_scaleX);
-            ScaleY.push_back(_scaleY);
-            Inversion.push_back((float)_inversion);
+            sumX += x - x0;
+            x0 = x;
+            nextPosition = position;
+            nextPosition.x += sumX * kx;
+            GLfloat _time = _startTime;
+            GLfloat _scaleX = mix(3.0f, 7.0f, this->randFloat());      //Сколько витков
+            GLfloat _scaleY = mix(0.001f, 0.003f, this->randFloat());      //Сколько витков
+            // GLfloat distance = abs(i-centr)/centr + 0.01; //(0.9 : 0.0) + 0.1
+            // GLfloat _scaleY = 0.001f * distance; //Сжатие витков
+            // _scaleY = mix(_scaleY - 0.002f, _scaleY + 0.002f, this->randFloat()); //Сжатие витков
+            // GLfloat _scaleX = 7.0f;
+            // GLfloat _scaleY = 0.0001f;
+
+            GLint _inversion = getRandomNumber(0, 1);
+            _inversion = _inversion == 0 ? -1 : 1;
+            // _inversion *= -1;
+            for (GLuint j = 0; j < nParticles; j++)
+            {
+                Pos.push_back(nextPosition);
+                LifeTime.push_back(particleLifetime);
+                StartTime.push_back(_time);
+                _time += rate;
+                ScaleX.push_back(_scaleX);
+                ScaleY.push_back(_scaleY);
+                Inversion.push_back((float)_inversion);
+            }
         }
     }
     delete[] xs;
-    printf("c: %zi, %zi\n", Pos.size(), Inversion.size());
+    printf("c: %zi\n", Pos.size());
 }
 Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
-:circle(0.0f, 0.0f, 0.0f, 0.08f, 12)
+    : circle(0.0f, 0.0f, 0.06f, 12)
 {
-    // MCircle mcircle(0.0f, 0.0f, 0.0f, 0.08f, (uint)12);
-    // MCircle circle = MCircle();
     srand(static_cast<unsigned int>(time(0)));
     rand();
     this->initFire(position, width);
@@ -311,116 +341,7 @@ Fire::Fire(vec2 position, GLfloat width, GLuint wWdth, GLuint wHeight)
     this->timeNow = 0.0f;
     this->deltaT = 0.0f;
     this->drawBuf = 1;
-    // this->update(float(glfwGetTime()));
     // printf("12\n");
-    return;
-    this->shader.create("assets/shaders/point3.vs", "assets/shaders/point.fs");
-
-    // this->shader.create("assets/shaders/point2.vs", "assets/shaders/point.fs", "assets/shaders/circleGeometry.gs");
-
-    // GLfloat onePxPart = 2.0f / (GLfloat)wWdth; //шаг смещения (количество частей в одном пикселе)
-    vec2 nextPosition = position;
-    GLint inversion, i;
-    // GLfloat interval;
-    GLfloat scaleX, scaleY, length;
-    // GLuint k = 0;
-    srand(static_cast<unsigned int>(time(0)));
-    rand();
-    GLfloat m, n, k, l, step, x, nx;
-    GLfloat const c = 200.0f; //100 язычков пламени
-
-    k = 2.0f;
-    // m = PI / (2.0f * k);
-    n = -m;
-    l = m * 2.0f;
-    step = l / c;
-    scaleY = 1.0f / l;
-
-    GLfloat xs[(uint)(c - 1)];
-
-    GLfloat offset = width / c;
-    // onePxPart *= offset;
-    // GLfloat step = width;
-    // width += position.x;
-
-    GLfloat y, y0, dy, yMax, kl;
-    // kl = 2.0f;
-    kl = width * scaleY;
-    i = 0;
-    y0 = 0;
-    // printf("n: %f, l: %f, step: %f; offset:%f\n", n, l, step, offset);
-
-    nx = n;
-    for (x = n + step; x < m - step; x += step, i++)
-    {
-        y = cos(x * k);
-        dy = y - y0;
-        y0 = y;
-        xs[i] = nx + abs(dy) / 2.0f * l;
-        nx = xs[i];
-        // printf("i: %i, y: %f\n", i, xs[i]);
-        // i++;
-    }
-
-    GLfloat kx = width / l;
-
-    for (i = 0; i < sizeof(xs) / sizeof(xs[0]); i++)
-    {
-        x = xs[i];
-        y = cos(x * k);
-        yMax = y * kl;
-        length = getRandomNumber((int)(0.6 * yMax * 1000.0f), (int)(yMax * 1000.0f)) / 1000.0f;
-        // length = yMax;
-
-        if (length > 0.4f)
-        {
-            nextPosition.x = kx * x;
-
-            inversion = getRandomNumber(0, 1);
-            inversion = inversion == 0 ? -1 : 1;
-            // interval = getRandomNumber(10, 20) / 1000.0f; //0.02f;
-            scaleX = getRandomNumber(10, 90) / 10.0f;
-            // scaleY = 1.0f;
-            scaleY = getRandomNumber(5, 30) / 100.0f;
-            // BrushGenerator brush = BrushGenerator(this->shader, nextPosition, length, scaleX, scaleY, inversion);
-            // this->brushes.push_back(brush);
-            // return;
-        }
-    }
-
-    /*    return;
-
-    i=position.x;
-    for (GLfloat x = n+step; x < m; x += step){
-        y = cos(x*k);
-        // y = abs(x*k)*-1.0f+1.0f;
-        yMax = y*kl;
-        length = getRandomNumber((int)(0.6 * yMax * 1000.0f), (int)(yMax * 1000.0f)) / 1000.0f;
-        // length = yMax;
-
-        i += offset;
-        nextPosition.x = i;
-        if (length > 0.9f)
-        {
-     //        {
-                dy = y - y0;
-                y0 = y;
-                position.x += abs(dy)/2.0f * width;
-                nextPosition.x = position.x;
-       //     }
-            // printf("i:%i; y: %f; yMax: %f; x:%f; ody:%f; dx:%f; xn:%f; l: %f\n", i++, y, yMax, nextPosition.x, dy, dy*width, position.x, length);
-            inversion = getRandomNumber(0, 1);
-            inversion = inversion == 0 ? -1 : 1;
-            // interval = getRandomNumber(10, 20) / 1000.0f; //0.02f;
-            scaleX = getRandomNumber(10, 50) / 10.0f;
-            // scaleY = 1.0f;
-            scaleY = getRandomNumber(5, 30) / 100.0f;
-            BrushGenerator brush = BrushGenerator(this->shader, nextPosition, length, scaleX, scaleY, inversion);
-            this->brushes.push_back(brush);
-        }
-    }*/
-    // std::cout <<"ee " << this->brushes.size() << std::endl;
-    // std::cout <<"ee " <<k << " "<< offset<<" " << this->brushes.size() << std::endl;
 }
 void Fire::update(float t)
 {
@@ -441,10 +362,20 @@ void Fire::render(mat4 &projection, mat4 &view)
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[drawBuf]);
 
     glBeginTransformFeedback(GL_POINTS);
+    // glBeginTransformFeedback(GL_TRIANGLES);
     glBindVertexArray(VAOparticleArray[1 - drawBuf]);
-    glDrawArrays(GL_POINTS, 0, nParticles);
-    glEndTransformFeedback();
+    glDisableVertexAttribArray(7);
+    glVertexAttribDivisor(0, 0);
+    glVertexAttribDivisor(1, 0);
+    glVertexAttribDivisor(2, 0);
+    glVertexAttribDivisor(3, 0);
+    glVertexAttribDivisor(4, 0);
+    glVertexAttribDivisor(5, 0);
+    glVertexAttribDivisor(6, 0);
 
+    glDrawArrays(GL_POINTS, 0, nParticles);
+    glBindVertexArray(0);
+    glEndTransformFeedback();
     glDisable(GL_RASTERIZER_DISCARD);
 
     // Render pass
@@ -454,7 +385,18 @@ void Fire::render(mat4 &projection, mat4 &view)
     this->shader.setMat4("MVP", MVP);
 
     glBindVertexArray(VAOparticleArray[drawBuf]);
-    glDrawTransformFeedback(GL_POINTS, feedback[drawBuf]);
+    glEnableVertexAttribArray(7);
+
+    glVertexAttribDivisor(0, 1);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+    glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, circle.getNPoints(), nParticles);
+    // glDrawTransformFeedback(GL_POINTS, feedback[drawBuf]);
+    // glDrawTransformFeedback(GL_TRIANGLE_FAN, feedback[drawBuf]);
 
     // Swap buffers
     drawBuf = 1 - drawBuf;

@@ -24,8 +24,12 @@ public:
     {
         return nPointsOfCircle;
     };
+    std::vector<GLfloat> getVerteciesCurcle() const
+    {
+        return vertices;
+    };
     // Circle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 0.0f, GLfloat radius = 0.1f, GLuint numberOfSides = 6);
-    MCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLuint numberOfSides);
+    MCircle(GLfloat x, GLfloat y, GLfloat radius, GLuint numberOfSides);
     ~MCircle();
 };
 

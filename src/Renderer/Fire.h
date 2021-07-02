@@ -29,6 +29,7 @@ public:
 private:
     RenderEngine::ShaderProgram shader;
     GLint getRandomNumber(int min, int max);
+    GLfloat _grapfXQR(float a, float x, float b);
 
     float timeNow, deltaT, particleLifetime;
     void update( float t );

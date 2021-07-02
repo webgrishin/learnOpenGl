@@ -2,7 +2,7 @@
 #include "MCircle.h"
 
 // Circle::Circle(GLfloat x = 0.0f, GLfloat y = 0.0f, GLfloat z = 0.0f, GLfloat radius = 0.1f, GLuint numberOfSides = 6)
-MCircle::MCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLuint numberOfSides)
+MCircle::MCircle(GLfloat x, GLfloat y, GLfloat radius, GLuint numberOfSides)
 {
     nPointsOfCircle = numberOfSides + 2;
 
@@ -34,7 +34,7 @@ MCircle::MCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLuint numberO
 //         -0.4f, 0.4f, 0.0f,  
 // };
 
-    glGenVertexArrays(1, &VAO);
+    /* glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     GLuint VBO;
@@ -43,7 +43,7 @@ MCircle::MCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLuint numberO
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), &vertices[0], GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
-    glBindVertexArray(0);
+    glBindVertexArray(0); */
 };
 
 void MCircle::deleteBuffers() {
@@ -68,5 +68,5 @@ void MCircle::deleteBuffers() {
 }
 MCircle::~MCircle()
 {
-    deleteBuffers();
+    // deleteBuffers();
 }
